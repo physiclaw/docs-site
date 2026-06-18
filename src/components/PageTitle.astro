@@ -1,0 +1,40 @@
+---
+// Overrides Starlight's PageTitle to show a breadcrumb path above the title,
+// so readers always know which section they're in. The trail is derived from
+// the sidebar, which Starlight has already localized — so en/zh just work.
+const { sidebar, entry } = Astro.locals.starlightRoute;
+
+type SidebarEntry = (typeof sidebar)[number];
+
+/** Collect the ancestor group labels leading to the current page. */
+function trailToCurrent(entries: SidebarEntry[], trail: string[] = []): string[] | null {
+  for (const item of entries) {
+    if (item.type === 'group') {
+      const found = trailToCurrent(item.entries, [...trail, item.label]);
+      if (found) return found;
+    } else if (item.type === 'link' && item.isCurrent) {
+      return trail;
+    }
+  }
+  return null;
+}
+
+const title = entry.data.title;
+const groups = trailToCurrent(sidebar) ?? [];
+// Only show a breadcrumb when the page lives under a section — otherwise it
+// would just repeat the title.
+const crumbs = groups.length ? [...groups, title] : [];
+---
+
+{
+  crumbs.length > 0 && (
+    <nav class="breadcrumbs" aria-label="Breadcrumb">
+      <ol>
+        {crumbs.map((label, i) => (
+          <li aria-current={i === crumbs.length - 1 ? 'page' : undefined}>{label}</li>
+        ))}
+      </ol>
+    </nav>
+  )
+}
+<h1 id="_top">{title}</h1>

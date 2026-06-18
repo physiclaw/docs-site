@@ -1,100 +1,120 @@
 /* ──────────────────────────────────────────────────────────────────────────
-   PhysiClaw docs theme — Material Design 3 over Starlight.
-   Brand palette from the landing page (safety-orange = Material "primary",
-   near-black surfaces, Inter + JetBrains Mono), expressed through Material's
-   shape, elevation, and state-layer language: rounded nav pills, soft
-   elevation, tonal hovers, generous spacing.
+   PhysiClaw docs theme — openclaw look ported onto Starlight.
+   Borrowed from openclaw/docs: warm near-black palette, coral-orange brand,
+   MONOSPACE body + SANS-SERIF headings (no web fonts — system stacks only),
+   and the 340 / 760 / 250 three-column proportions. The openclaw HTML is
+   custom (markdown-it); here the same design is expressed through Starlight's
+   --sl-* tokens and class names, keeping our three-column layout.
    ────────────────────────────────────────────────────────────────────────── */
 
 :root {
-  /* Primary — the landing's safety orange */
-  --sl-color-accent-low: #3a1a0d;
-  --sl-color-accent: #e85d26;
-  --sl-color-accent-high: #f7b79b;
+  /* Fonts — the openclaw signature: mono everywhere, sans for headings.
+     CJK faces appended so Chinese (zh) renders in a proper face while Latin
+     stays mono/sans. No web fonts loaded. */
+  --sl-font: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas,
+    'Liberation Mono', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', monospace;
+  --sl-font-display: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    'Segoe UI', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', sans-serif;
+  --sl-font-mono: var(--sl-font);
 
-  --sl-font: 'Inter', 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-  --sl-font-mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', ui-monospace, monospace;
-
-  --sl-line-height: 1.75;
+  --sl-line-height: 1.72;
   --sl-nav-height: 4rem;
 
-  /* Material type scale — comfortable sizes, open leading */
-  --sl-text-h1: 2.25rem;   /* ~36px  headline */
-  --sl-text-h2: 1.625rem;  /* ~26px  section  */
-  --sl-text-h3: 1.3rem;    /* ~21px  subsection */
-  --sl-text-h4: 1.1rem;    /* ~18px */
-  --sl-text-h5: 1rem;
-  --sl-line-height-headings: 1.3;
+  /* Three-column proportions from openclaw (340px sidebar; a wide article). */
+  --sl-sidebar-width: 21.25rem; /* 340px */
+  --sl-content-width: 50rem;    /* 800px — a touch wider, openclaw feel */
 
-  /* Material shape scale */
-  --md-shape-sm: 8px;
-  --md-shape-md: 12px;
-  --md-shape-lg: 16px;
-  --md-shape-xl: 28px;
-  --md-shape-pill: 9999px;
+  /* Type scale — openclaw sizes (px → rem). Sans, weight ~700, no tracking. */
+  --sl-text-h1: 1.75rem;     /* 28px */
+  --sl-text-h2: 1.4375rem;   /* 23px */
+  --sl-text-h3: 1.0625rem;   /* 17px */
+  --sl-text-h4: 0.875rem;    /* 14px */
+  --sl-text-h5: 0.8125rem;   /* 13px */
+  --sl-line-height-headings: 1.2;
 
-  /* Material elevation (tuned for a dark surface) */
-  --md-elevation-1: 0 1px 2px rgba(0, 0, 0, 0.30), 0 1px 3px 1px rgba(0, 0, 0, 0.14);
-  --md-elevation-2: 0 1px 2px rgba(0, 0, 0, 0.30), 0 2px 6px 2px rgba(0, 0, 0, 0.16);
-  --md-elevation-3: 0 4px 8px 3px rgba(0, 0, 0, 0.16), 0 1px 3px rgba(0, 0, 0, 0.30);
+  /* Code-block header bar height — shared by the header row and the copy
+     button so the button stays vertically centered in it. */
+  --oc-code-header-h: 2.4rem;
 }
 
-/* Dark theme (default) — the landing's tokens, 1:1 */
+/* Dark theme (default) — openclaw warm near-black palette, 1:1. */
 :root,
 :root[data-theme='dark'] {
-  --sl-color-white: #f4f4f6;
-  --sl-color-gray-1: #e8e8ec;
-  --sl-color-gray-2: #b4b4bc;
-  --sl-color-gray-3: #8a8a94;
-  --sl-color-gray-4: #5a5a64;
-  --sl-color-gray-5: #2a2a2e;
-  --sl-color-gray-6: #1a1a1e;
-  --sl-color-gray-7: #141416;
-  --sl-color-black: #0a0a0b;
+  --oc-paper: #111010;
+  --oc-paper-2: #151211;
+  --oc-soft: #241915;          /* active-nav wash */
+  --oc-code-block: #101010;
+  --oc-code-border: #262322;
+  --oc-code-shadow: 0 18px 56px rgba(0, 0, 0, 0.30);
 
-  --sl-color-bg: #0a0a0b;
-  --sl-color-bg-nav: color-mix(in srgb, #0a0a0b 78%, transparent);
-  --sl-color-bg-sidebar: #0d0d10;
-  --sl-color-bg-inline-code: #1a1a1e;
-  --sl-color-hairline: #1c1c20;
-  --sl-color-hairline-light: #2a2a2e;
-  --sl-color-hairline-shade: #141416;
-  --sl-color-text-accent: #f0743f;
-  --sl-color-text-invert: #0a0a0b;
+  --sl-color-white: #f4f1ef;   /* ink — headings, strong */
+  --sl-color-gray-1: #d8d2cd;
+  --sl-color-gray-2: #aaa19d;  /* body text */
+  --sl-color-gray-3: #817a76;  /* muted */
+  --sl-color-gray-4: #5f5853;
+  --sl-color-gray-5: #2c2826;
+  --sl-color-gray-6: #151211;
+  --sl-color-gray-7: #111010;  /* paper */
+  --sl-color-black: #0d0b0b;
 
-  /* Material tonal surfaces derived from primary */
-  --md-primary-container: color-mix(in srgb, var(--sl-color-accent) 20%, transparent);
-  --md-primary-container-hover: color-mix(in srgb, var(--sl-color-accent) 28%, transparent);
+  --sl-color-bg: #0d0b0b;
+  --sl-color-bg-nav: color-mix(in srgb, #0d0b0b 94%, transparent);
+  --sl-color-bg-sidebar: var(--sl-color-bg); /* flush with the main area */
+  --sl-color-bg-inline-code: #1b1a1a;
+  --sl-color-hairline: #201d1c;        /* line */
+  --sl-color-hairline-light: #2c2826;  /* line-strong */
+  --sl-color-hairline-shade: #141010;
+
+  --sl-color-accent-low: #3a1c12;
+  --sl-color-accent: #ff8a5f;          /* brand */
+  --sl-color-accent-high: #ffc7ad;
+  --sl-color-text-accent: #ff8a5f;
+  --sl-color-text-invert: #1b0d08;
+
+  /* Callout hues — openclaw's set (note/tip/warning/say) + a red for danger. */
+  --oc-callout-note: #7aa7ff;
+  --oc-callout-tip: #48b49a;
+  --oc-callout-caution: #d97706;
+  --oc-callout-danger: #e5544e;
 }
 
-/* Light theme — the landing's light tokens */
+/* Light theme — openclaw warm-paper palette. */
 :root[data-theme='light'] {
-  --sl-color-white: #15151a;
-  --sl-color-gray-1: #1a1a1e;
-  --sl-color-gray-2: #3a3a42;
-  --sl-color-gray-3: #5a5a64;
-  --sl-color-gray-4: #8a8a94;
-  --sl-color-gray-5: #d6d6d0;
-  --sl-color-gray-6: #e8e8e4;
-  --sl-color-gray-7: #f4f4f2;
-  --sl-color-black: #fafaf9;
+  --oc-paper: #fffdfa;
+  --oc-paper-2: #fffaf4;
+  --oc-soft: #f6e9e1;
+  --oc-code-block: #fffefa;
+  --oc-code-border: #ddd6ce;
+  --oc-code-shadow: none;
 
-  --sl-color-bg: #fafaf9;
-  --sl-color-bg-nav: color-mix(in srgb, #fafaf9 80%, transparent);
-  --sl-color-bg-sidebar: #f3f3f1;
-  --sl-color-bg-inline-code: #ececea;
-  --sl-color-hairline: #e2e2dc;
-  --sl-color-hairline-light: #d6d6d0;
-  --sl-color-accent-low: #f6dccd;
-  --sl-color-accent: #d4511a;
-  --sl-color-accent-high: #7a2e0e;
-  --sl-color-text-accent: #c2480f;
+  --sl-color-white: #171514;
+  --sl-color-gray-1: #2a2522;
+  --sl-color-gray-2: #413b37;
+  --sl-color-gray-3: #716a66;
+  --sl-color-gray-4: #94897f;
+  --sl-color-gray-5: #ded0c7;
+  --sl-color-gray-6: #f3ece4;
+  --sl-color-gray-7: #fffdfa;
+  --sl-color-black: #fbfaf7;
 
-  --md-primary-container: color-mix(in srgb, var(--sl-color-accent) 14%, transparent);
-  --md-primary-container-hover: color-mix(in srgb, var(--sl-color-accent) 20%, transparent);
-  --md-elevation-1: 0 1px 2px rgba(0, 0, 0, 0.08), 0 1px 3px 1px rgba(0, 0, 0, 0.06);
-  --md-elevation-2: 0 1px 2px rgba(0, 0, 0, 0.10), 0 2px 6px 2px rgba(0, 0, 0, 0.07);
-  --md-elevation-3: 0 4px 8px 3px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.10);
+  --sl-color-bg: #fbfaf7;
+  --sl-color-bg-nav: color-mix(in srgb, #fbfaf7 94%, transparent);
+  --sl-color-bg-sidebar: var(--sl-color-bg);
+  --sl-color-bg-inline-code: #f3efea;
+  --sl-color-hairline: #e8ddd5;
+  --sl-color-hairline-light: #ded0c7;
+  --sl-color-hairline-shade: #efe6dd;
+
+  --sl-color-accent-low: #f7ddd2;
+  --sl-color-accent: #d75a37;
+  --sl-color-accent-high: #7a2e18;
+  --sl-color-text-accent: #c14f2e;
+  --sl-color-text-invert: #fffdfa;
+
+  --oc-callout-note: #2f6fb0;
+  --oc-callout-tip: #1f8a72;
+  --oc-callout-caution: #b45f06;
+  --oc-callout-danger: #cc3b3b;
 }
 
 /* ── Typography ───────────────────────────────────────────────────────────── */
@@ -104,188 +124,378 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Headings: Material headline feel — medium weight, relaxed tracking,
-   open line-height. Not the heavy/tight technical look. */
-.sl-markdown-content :is(h1, h2, h3, h4, h5),
+/* Headings: system sans, weight 700, no tracking (openclaw). */
+.sl-markdown-content :is(h1, h2, h3, h4, h5, h6),
 .content-panel h1 {
-  font-weight: 600;
+  font-family: var(--sl-font-display);
+  font-weight: 700;
   line-height: var(--sl-line-height-headings);
+  letter-spacing: 0;
+  color: var(--sl-color-white);
 }
-.sl-markdown-content h1,
-.content-panel h1 { letter-spacing: -0.018em; }
-.sl-markdown-content h2 { letter-spacing: -0.012em; }
-.sl-markdown-content :is(h3, h4) { letter-spacing: -0.004em; }
 
-/* Comfortable reading: 17px body, open leading, clear block rhythm,
-   and generous breathing room before each section heading. */
+/* Body copy: 14px monospace, open leading (openclaw). */
 .sl-markdown-content {
-  font-size: 1.0625rem;
-  line-height: 1.75;
+  font-size: 0.875rem;
+  line-height: 1.72;
 }
-.sl-markdown-content > * + * { margin-top: 1.15rem; }
+.sl-markdown-content > * + * { margin-top: 1.12em; }
 .sl-markdown-content > :first-child { margin-top: 0; }
 
-.sl-markdown-content h2 { margin-top: 2.75rem; margin-bottom: 0.35rem; }
-.sl-markdown-content h3 { margin-top: 2.1rem; margin-bottom: 0.2rem; }
-.sl-markdown-content h4 { margin-top: 1.65rem; margin-bottom: 0.2rem; }
-.sl-markdown-content :is(h2, h3, h4) + * { margin-top: 0.7rem; }
+/* openclaw heading rhythm — em-based, generous space before each section. */
+.sl-markdown-content h2 { font-size: var(--sl-text-h2); line-height: 1.22; margin: 3em 0 0.65em; }
+.sl-markdown-content h3 { font-size: var(--sl-text-h3); line-height: 1.28; margin: 1.8em 0 0.45em; }
+.sl-markdown-content h4 { font-size: var(--sl-text-h4); line-height: 1.35; margin: 1.4em 0 0.35em; }
+.sl-markdown-content :is(h2, h3, h4) + * { margin-top: 0.55em; }
 
-.sl-markdown-content :is(ul, ol) { padding-inline-start: 1.4rem; }
-.sl-markdown-content li + li { margin-top: 0.4rem; }
-.sl-markdown-content li > ul { margin-top: 0.4rem; }
+.sl-markdown-content strong { color: var(--sl-color-white); font-weight: 800; }
 
-/* A touch more air around tables and callouts */
+.sl-markdown-content :is(ul, ol) { padding-inline-start: 1.35rem; }
+.sl-markdown-content li { margin: 0.24em 0; }
+.sl-markdown-content li > :is(ul, ol) { margin-top: 0.24em; }
+
 .sl-markdown-content :is(table, .starlight-aside, .expressive-code) {
   margin-top: 1.5rem;
   margin-bottom: 1.5rem;
 }
 
+/* Drop Starlight's hairline divider between the page title and the body.
+   Doubled class outranks Starlight's own (equal-specificity) rule. */
+.content-panel.content-panel + .content-panel { border-top: none; }
+
+/* Page title (custom PageTitle override). */
+.content-panel h1#_top {
+  font-size: var(--sl-text-h1);
+  line-height: 1.12;
+  margin-top: 0.25rem;
+}
+
+/* Breadcrumb path above the title — small, muted, grey. */
+.breadcrumbs {
+  font-size: 0.75rem;
+  line-height: 1.3;
+}
+.breadcrumbs ol {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.breadcrumbs li {
+  color: var(--sl-color-gray-3);
+  font-weight: 500;
+}
+.breadcrumbs li:not(:last-child)::after {
+  content: '/';
+  margin-inline: 0.45rem;
+  color: var(--sl-color-gray-4);
+  font-weight: 400;
+}
+.breadcrumbs li[aria-current='page'] { color: var(--sl-color-gray-2); }
+
 /* ── Top app bar ──────────────────────────────────────────────────────────── */
 
 header.header {
   border-bottom: 1px solid var(--sl-color-hairline);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
 }
 .site-title {
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  font-family: var(--sl-font-display);
+  font-weight: 800;
+  letter-spacing: -0.01em;
   color: var(--sl-color-white);
 }
-.site-title img { height: 1.6rem; }
+.site-title img { height: 1.5rem; }
 
-/* ── Sidebar = Material navigation drawer ─────────────────────────────────── */
+/* ── Sidebar (openclaw nav) ───────────────────────────────────────────────── */
 
-nav.sidebar .sidebar-content { padding-inline: 0.6rem; }
+nav.sidebar .sidebar-content { padding-inline: 0.4rem; }
 
-/* Natural, sentence-case group headings */
+/* Flush with the main area — no divider line. */
+.sidebar-pane.sidebar-pane { border-inline-end: none; }
+
+/* ── Three-column layout: openclaw spacing, no column dividers ────────────── */
+
+/* Starlight pins the article's whole horizontal slack to the left (auto 0), so
+   it floats far right against the TOC. Balance both margins instead → the
+   article sits naturally between sidebar and TOC, openclaw-style. Doubled class
+   outranks Starlight's [data-has-sidebar][data-has-toc] .main-pane rule. */
+@media (min-width: 72rem) {
+  [data-has-sidebar][data-has-toc] .main-pane.main-pane {
+    --sl-content-margin-inline: auto;
+  }
+}
+
+/* Remove the vertical divider beside the right-hand TOC (the left sidebar's
+   divider is already removed above). */
+.right-sidebar.right-sidebar { border-inline-start: none; }
+
+/* Section headings: sans, solid ink. */
 .sidebar-content .large {
-  font-family: var(--sl-font);
-  font-weight: 600;
-  font-size: 0.8rem;
+  font-family: var(--sl-font-display);
+  font-weight: 700;
+  font-size: 0.8125rem;
   letter-spacing: 0;
   text-transform: none;
-  color: var(--sl-color-gray-2);
-  padding-inline-start: 1rem;
-  margin-block: 0.4rem 0.1rem;
+  color: var(--sl-color-white);
+  padding-inline-start: 0.875rem;
+  margin-block: 0.4rem 0.5rem;
 }
 
-/* Pill-shaped nav items with a tonal state layer */
+/* Nav items: rounded rects, muted → ink on hover, soft+brand when active. */
 .sidebar-content a {
-  border-radius: var(--md-shape-pill);
+  border-radius: 9px;
   border: none;
-  padding: 0.5rem 1rem;
+  padding: 0.44rem 0.875rem;
   margin-block: 2px;
-  color: var(--sl-color-gray-2);
-  line-height: 1.4;
-  transition: background-color 0.15s ease, color 0.15s ease;
+  color: var(--sl-color-gray-3);
+  font-size: 0.875rem;
+  line-height: 1.48;
+  transition: background-color 0.16s ease, color 0.16s ease;
 }
 .sidebar-content a:hover {
-  /* Material state layer: on-surface @ ~8% */
-  background: color-mix(in srgb, var(--sl-color-white) 8%, transparent);
+  background: color-mix(in srgb, var(--oc-paper) 68%, transparent);
   color: var(--sl-color-white);
 }
 .sidebar-content a[aria-current='page'] {
-  background: var(--md-primary-container);
+  background: var(--oc-soft);
   color: var(--sl-color-text-accent);
-  font-weight: 600;
-}
-.sidebar-content a[aria-current='page']:hover {
-  background: var(--md-primary-container-hover);
+  font-weight: 700;
 }
 
 /* ── Right-hand table of contents ─────────────────────────────────────────── */
 
 starlight-toc a {
-  border-radius: var(--md-shape-sm);
+  color: var(--sl-color-gray-3);
+  padding-block: 0.4rem;
+  border-radius: 0;
 }
+starlight-toc a:hover { color: var(--sl-color-white); }
 starlight-toc a[aria-current='true'] {
   color: var(--sl-color-text-accent);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 /* ── Links & inline code ──────────────────────────────────────────────────── */
 
 .sl-markdown-content a:not(:where(.not-content *)) {
   color: var(--sl-color-text-accent);
-  text-underline-offset: 0.18em;
+  text-decoration: underline;
   text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
 }
+.sl-markdown-content a:not(:where(.not-content *)):hover { color: var(--sl-color-white); }
+
 .sl-markdown-content code:not(:where(.not-content *)) {
-  font-size: 0.85em;
+  font-size: 0.86em;
   background: var(--sl-color-bg-inline-code);
-  border-radius: var(--md-shape-sm);
-  padding: 0.12em 0.4em;
+  border: 1px solid var(--oc-code-border);
+  border-radius: 5px;
+  padding: 0.08em 0.36em;
+  color: var(--sl-color-white);
 }
 
-/* Code blocks: rounded Material surface with soft elevation */
-.expressive-code .frame {
-  border-radius: var(--md-shape-md);
-  box-shadow: var(--md-elevation-1);
-  overflow: hidden;
+/* Code blocks (Expressive Code): surface + syntax theme are configured in
+   astro.config (GitHub palette on the openclaw #101010 surface). The language
+   label is injected as the frame title by the codeLanguageLabel plugin; the
+   rules below turn EC's terminal-dots / editor-tab header into one openclaw
+   bar — the uppercase language at the left, a thin divider beneath. */
+
+/* Terminal frames: drop the traffic-light dots + their own divider, left-align. */
+.expressive-code .frame.is-terminal .header { justify-content: flex-start; }
+.expressive-code .frame.is-terminal .header::before,
+.expressive-code .frame.is-terminal .header::after { display: none; }
+
+/* Editor frames: strip the tab chrome so the title reads as a plain label. */
+.expressive-code .frame.has-title:not(.is-terminal) .header::before { display: none; }
+.expressive-code .frame.has-title:not(.is-terminal) .title {
+  background: transparent;
+  border: 0;
+  margin: 0;
 }
 
-/* ── Cards = Material elevated/filled cards ───────────────────────────────── */
+/* Shared header bar: a slim row with the uppercase language label (openclaw's
+   .docs-chat-code-head spec) at the left and a thin divider beneath. */
+.expressive-code .frame .header {
+  display: flex;
+  align-items: center;
+  min-height: var(--oc-code-header-h);
+  border-bottom: 1px solid var(--sl-color-gray-6);
+}
+.expressive-code .frame .title {
+  padding-block: 0;
+  padding-inline: 14px;
+  color: var(--sl-color-gray-3);
+  font-family: var(--sl-font-display);
+  font-size: 0.6875rem; /* 11px */
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* Copy button — fixed in the header row (not floating over the code),
+   vertically centered at the right, always visible and brightening on hover.
+   EC's clipboard + "Copied!" tooltip logic already matches openclaw. */
+.expressive-code .frame .copy {
+  inset-block-start: 0;
+  inset-inline-end: 0.5rem;
+  height: var(--oc-code-header-h); /* matches the header → button stays centered */
+  align-items: center;
+}
+.expressive-code .frame .copy button {
+  align-self: center;
+  width: 1.85rem;
+  height: 1.85rem;
+  opacity: 0.6;
+}
+.expressive-code .frame .copy button:hover,
+.expressive-code .frame .copy button:focus-visible { opacity: 1; }
+/* No border box around the icon (EC draws it via button::before). */
+.expressive-code .frame .copy button::before { display: none; }
+
+/* openclaw copy icon (Lucide "copy"), muted grey, drawn via EC's mask layer.
+   The SVG lives in --oc-icon so both mask properties reference it once; the
+   success rule below just swaps --oc-icon to the check glyph. */
+.expressive-code .frame .copy button::after {
+  --oc-icon: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='%23000'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Crect%20width='14'%20height='14'%20x='8'%20y='8'%20rx='2'/%3E%3Cpath%20d='M4%2016c-1.1%200-2-.9-2-2V4c0-1.1.9-2%202-2h10c1.1%200%202%20.9%202%202'/%3E%3C/svg%3E");
+  background-color: var(--sl-color-gray-3);
+  margin: 0.42rem;
+  -webkit-mask-image: var(--oc-icon);
+  mask-image: var(--oc-icon);
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+}
+
+/* On success EC builds a .feedback element (nested in the aria-live div) and
+   toggles .show on it. Suppress its "Copied" text tooltip and instead swap the
+   button icon to a check, in place (openclaw). Matched via :has() since the
+   .feedback is not a direct sibling of the button. */
+.expressive-code .frame .copy .feedback { display: none; }
+.expressive-code .frame .copy:has(.feedback.show) button { opacity: 1; }
+.expressive-code .frame .copy:has(.feedback.show) button::after {
+  --oc-icon: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='%23000'%20stroke-width='2.4'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M20%206%209%2017l-5-5'/%3E%3C/svg%3E");
+  background-color: var(--oc-callout-tip); /* green check */
+}
+
+/* FileTree — openclaw rounded box. It already inherits the palette via the
+   --sl-color-gray-* tokens; just round the corners and use the strong hairline. */
+starlight-file-tree {
+  border-color: var(--sl-color-hairline-light);
+  border-radius: 8px;
+}
+
+/* ── Cards (openclaw oc-card) ─────────────────────────────────────────────── */
 
 .card {
-  border: 1px solid var(--sl-color-hairline);
-  border-radius: var(--md-shape-lg);
-  background: var(--sl-color-gray-7);
-  box-shadow: var(--md-elevation-1);
-  transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+  border: 1px solid var(--sl-color-hairline-light);
+  border-radius: 8px;
+  background: transparent;
+  transition: border-color 0.16s ease, background 0.16s ease;
 }
-.card:hover {
-  box-shadow: var(--md-elevation-3);
-  transform: translateY(-2px);
-  border-color: var(--sl-color-hairline-light);
-}
-/* Icon sits in a tonal "primary container" chip */
 .card .icon {
-  color: var(--sl-color-text-accent);
-  background: var(--md-primary-container);
-  border-radius: var(--md-shape-md);
-  padding: 0.45rem;
-  box-sizing: content-box;
+  color: var(--sl-color-accent);
+  background: none;
+  padding: 0;
 }
 
-/* LinkCards: rounded, state layer on hover */
 .sl-link-card {
-  border: 1px solid var(--sl-color-hairline);
-  border-radius: var(--md-shape-md);
-  box-shadow: var(--md-elevation-1);
-  transition: box-shadow 0.2s ease, background-color 0.2s ease;
-}
-.sl-link-card:hover {
-  box-shadow: var(--md-elevation-2);
-  background: color-mix(in srgb, var(--sl-color-white) 4%, transparent);
+  border: 1px solid var(--sl-color-hairline-light);
+  border-radius: 8px;
+  box-shadow: none;
+  transition: border-color 0.16s ease, background 0.16s ease;
 }
 
-/* ── Search "button" → Material filled tonal field ────────────────────────── */
+/* Shared hover for both card types: accent edge + a soft wash. */
+.card:hover,
+.sl-link-card:hover {
+  border-color: var(--sl-color-accent);
+  background: color-mix(in srgb, var(--oc-soft) 34%, transparent);
+}
+
+/* ── Search button (openclaw) ─────────────────────────────────────────────── */
 
 site-search button {
-  border-radius: var(--md-shape-pill) !important;
+  border-radius: 12px !important;
 }
 
-/* ── Asides / callouts: rounded Material containers ───────────────────────── */
+/* ── Tables (openclaw) ────────────────────────────────────────────────────── */
+
+.sl-markdown-content table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.8125rem; /* 13px */
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums lining-nums;
+  border: 1px solid var(--sl-color-hairline-light);
+  border-radius: 8px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--oc-paper) 72%, transparent);
+}
+.sl-markdown-content :is(th, td) {
+  border: 0;
+  border-bottom: 1px solid var(--sl-color-hairline);
+  padding: 10px 12px;
+  text-align: left;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+.sl-markdown-content thead th {
+  font-family: var(--sl-font-display);
+  font-weight: 780;
+  font-size: 0.75rem; /* 12px */
+  line-height: 1.35;
+  color: var(--sl-color-white);
+  background: color-mix(in srgb, var(--oc-paper-2) 86%, var(--oc-soft) 14%);
+}
+.sl-markdown-content tbody tr:last-child td { border-bottom: 0; }
+.sl-markdown-content tbody td { color: var(--sl-color-gray-2); }
+.sl-markdown-content tbody td:first-child {
+  color: var(--sl-color-white);
+  font-weight: 720;
+}
+
+/* ── Asides / callouts (openclaw) ─────────────────────────────────────────── */
+
+.starlight-aside--note    { --aside-accent: var(--oc-callout-note); }
+.starlight-aside--tip     { --aside-accent: var(--oc-callout-tip); }
+.starlight-aside--caution { --aside-accent: var(--oc-callout-caution); }
+.starlight-aside--danger  { --aside-accent: var(--oc-callout-danger); }
 
 .starlight-aside {
-  border-radius: var(--md-shape-md);
-  border-left-width: 4px;
+  /* Starlight derives the title + icon color from this; the edge is drawn
+     explicitly below. */
+  --sl-color-asides-text-accent: var(--aside-accent);
+  background: var(--sl-color-gray-7);
+  border: 1px solid var(--sl-color-hairline-light);
+  border-inline-start: 3px solid var(--aside-accent);
+  border-radius: 8px;
+  padding: 0.875rem 1rem;
+  color: var(--sl-color-gray-2);
+}
+.starlight-aside__title {
+  font-family: var(--sl-font-display);
+  font-weight: 700;
 }
 
-/* ── Blockquotes: accent-tinted ───────────────────────────────────────────── */
+/* ── Blockquotes (openclaw) ───────────────────────────────────────────────── */
 
 .sl-markdown-content blockquote {
-  border-inline-start: 3px solid var(--sl-color-accent);
-  background: color-mix(in srgb, var(--sl-color-accent) 8%, transparent);
-  border-radius: 0 var(--md-shape-md) var(--md-shape-md) 0;
-  padding: 0.85rem 1.25rem;
-  color: var(--sl-color-gray-1);
+  border-inline-start: 3px solid var(--sl-color-hairline-light);
+  padding-inline-start: 1.5rem;
+  color: var(--sl-color-gray-2);
+  font-style: italic;
 }
 .sl-markdown-content blockquote :first-child { margin-top: 0; }
 .sl-markdown-content blockquote :last-child { margin-bottom: 0; }
 
 ::selection {
   background: var(--sl-color-accent);
-  color: #fff;
+  color: var(--sl-color-text-invert);
 }
