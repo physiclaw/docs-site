@@ -1,13 +1,16 @@
 #!/usr/bin/env node
-// Splits the co-located bilingual docs in `physiclaw-docs/` into the per-locale
+// Splits the co-located bilingual docs from the docs source into the per-locale
 // layout Starlight expects, under its default content path `src/content/docs/`:
 //
-//   physiclaw-docs/intro.mdx      → src/content/docs/en/intro.mdx
-//   physiclaw-docs/intro.zh.mdx   → src/content/docs/zh/intro.mdx   (.zh trimmed)
+//   <docs-src>/intro.mdx      → src/content/docs/en/intro.mdx
+//   <docs-src>/intro.zh.mdx   → src/content/docs/zh/intro.mdx   (.zh trimmed)
 //
-// Writing to the default path lets Starlight's docsLoader() + sidebar
-// autogenerate work without a custom loader. Non-markdown assets are copied
-// into every locale. The output dir is wiped first so the build is idempotent.
+// The docs source is ./docs in production (CI mirrors PhysiClaw/docs into it) or
+// ./physiclaw-docs in local dev — resolved by resolveDocsSrc().
+//
+// Writing to the default path lets Starlight's docsLoader() find the content and
+// the docs.json sidebar slugs resolve, without a custom loader. Non-markdown assets
+// are copied into every locale. The output dir is wiped first so builds are idempotent.
 //
 // Authors write import-free Markdown: .mdx files are preprocessed here to inject
 // the `@astrojs/starlight/components` import for whatever components they use.
@@ -15,6 +18,7 @@
 import { readdir, readFile, writeFile, mkdir, copyFile, rm, stat } from 'node:fs/promises';
 import { dirname, extname, join, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { resolveDocsSrc } from './docs-config.mjs';
 
 // The single source of truth for the authoring convention.
 // '' (no suffix) is the default language; '.zh' marks the Chinese sibling.
@@ -148,15 +152,16 @@ export async function syncDocs({ src, out }) {
 // ── CLI ───────────────────────────────────────────────────────────────────
 const isMain = process.argv[1] === fileURLToPath(import.meta.url);
 if (isMain) {
-  const src = process.env.DOCS_SRC || 'physiclaw-docs';
-  // Starlight's default content location, so docsLoader() + autogenerate work.
+  const src = resolveDocsSrc();
+  // Starlight's default content location, so docsLoader() picks it up.
   const out = process.env.DOCS_OUT || 'src/content/docs';
 
   try {
     await stat(src);
   } catch {
-    console.error(`✗ sync-docs: source "${src}" not found.`);
-    console.error(`  Check out the code repo's docs/ into ${src}/ first (see README).`);
+    console.error(`✗ sync-docs: docs source "${src}" not found.`);
+    console.error(`  Production: CI mirrors PhysiClaw/docs into ./docs.`);
+    console.error(`  Local dev: check out the docs into ./physiclaw-docs (see README).`);
     process.exit(1);
   }
 

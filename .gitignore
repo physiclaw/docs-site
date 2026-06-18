@@ -5,7 +5,8 @@ dist
 .DS_Store
 .vscode
 
-# Original docs checked out from physiclaw/PhysiClaw (co-located .mdx / .zh.mdx)
+# Local-dev docs checkout from physiclaw/PhysiClaw (co-located .mdx / .zh.mdx).
+# The production mirror lives in ./docs and IS tracked — do not ignore it.
 physiclaw-docs
 # Generated Starlight content, split by locale (en/ + zh/) by scripts/sync-docs.mjs
 src/content/docs

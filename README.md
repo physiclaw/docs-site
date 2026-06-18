@@ -14,9 +14,21 @@ This repo is the **renderer**, not the content. The documentation Markdown lives
 pull request as the code they describe. This repo turns that Markdown into the static site.
 
 ```
-physiclaw/PhysiClaw   docs/         →   physiclaw-docs/   →   src/content/docs/{en,zh}   →   dist/
-(content, bilingual)   checkout          scripts/sync-docs.mjs        Starlight build
+physiclaw/PhysiClaw   docs/      →   docs/        →   src/content/docs/{en,zh}   →   dist/
+(content, bilingual)   mirror         (this repo)      scripts/sync-docs.mjs         Starlight build
 ```
+
+## Docs source: `docs/` vs `physiclaw-docs/`
+
+The build reads the authored docs from one directory, chosen by `resolveDocsSrc()`
+(`scripts/docs-config.mjs`):
+
+| Directory          | Tracked?           | Used when                       | Purpose                                  |
+| ------------------ | ------------------ | ------------------------------- | ---------------------------------------- |
+| `docs/`            | **yes**            | always preferred when present   | the production mirror CI syncs PhysiClaw/docs into |
+| `physiclaw-docs/`  | no (gitignored)    | fallback, when `docs/` is absent | a local-dev checkout                     |
+
+Override with `DOCS_SRC=<dir>` (e.g. `DOCS_SRC=physiclaw-docs pnpm dev`).
 
 ## Documentation conventions
 
@@ -27,6 +39,10 @@ Docs are authored in the **code repo** at `docs/`, with translations **co-locate
 Starlight's per-locale layout (`src/content/docs/en/`, `src/content/docs/zh/`), stripping the `.zh`
 suffix. The default language is a single `DEFAULT_LOCALE` constant in `astro.config.mjs`.
 
+Every page needs a **default-locale (English) source**; a `.zh` sibling is an optional translation.
+A missing `.zh` falls back to the English content; a `.zh` file with no English source is flagged at
+build time.
+
 ### Authoring — write plain Markdown, no imports
 
 Docs read like Markdown, not code. Authors **never write `import` statements**.
@@ -36,7 +52,25 @@ Docs read like Markdown, not code. Authors **never write `import` statements**.
   are written as bare tags in `.mdx` files — `scripts/sync-docs.mjs` injects the
   `@astrojs/starlight/components` import during sync. Use `.md` for prose, `.mdx` when you reach for a
   component.
-- **Sidebar order** comes from each doc's `sidebar.order` frontmatter; the sidebar is auto-generated.
+- **Frontmatter** is just `title` + `description` — no `sidebar` field.
+
+### Navigation — `docs.json`
+
+The sidebar is data-driven from **`docs.json`** at the docs root (schema: `docs.schema.json`). Each
+section lists its pages **in order**, by slug:
+
+```json
+{
+  "sidebar": [
+    { "label": "Start", "translations": { "zh-CN": "开始" },
+      "items": ["start/introduction", "start/installation", "start/quickstart"] }
+  ]
+}
+```
+
+`scripts/docs-config.mjs` validates it at build time (clear errors for unknown/duplicate slugs, a
+missing default-locale source, etc.) and warns about pages not listed in any section. Reordering or
+adding a page is a one-line edit in `docs.json` — no renderer change.
 
 ## Local development
 
@@ -47,44 +81,49 @@ git clone https://github.com/physiclaw/docs-site.git
 cd docs-site
 pnpm install
 
-# Check out the code repo's docs/ into physiclaw-docs/
+# Check out the code repo's docs/ into physiclaw-docs/ (the local-dev source)
 git clone --depth 1 https://github.com/physiclaw/PhysiClaw.git /tmp/physiclaw
 cp -r /tmp/physiclaw/docs physiclaw-docs
 
 pnpm dev            # syncs, then serves at http://localhost:4321
 ```
 
-Re-run `pnpm sync:docs` after editing anything in `physiclaw-docs/`.
+Re-run `pnpm sync:docs` after editing anything in the docs source.
 
-| Command          | Action                                              |
-| ---------------- | --------------------------------------------------- |
-| `pnpm dev`       | Sync + serve at `localhost:4321`                    |
-| `pnpm sync:docs` | Split `physiclaw-docs/` → `src/content/docs/{en,zh}` |
-| `pnpm build`     | Sync + build the static site to `./dist/`           |
-| `pnpm preview`   | Preview the production build                        |
-| `pnpm test`      | Run the `sync-docs` unit tests                      |
+| Command          | Action                                                |
+| ---------------- | ----------------------------------------------------- |
+| `pnpm dev`       | Sync + serve at `localhost:4321`                      |
+| `pnpm sync:docs` | Split the docs source → `src/content/docs/{en,zh}`    |
+| `pnpm build`     | Sync + build the static site to `./dist/`             |
+| `pnpm preview`   | Preview the production build                          |
+| `pnpm test`      | Run the `sync-docs` + `docs-config` unit tests        |
 
 ## Project structure
 
 ```
-physiclaw-docs/          # Original docs checked out from the code repo — gitignored
+docs/                     # Production docs mirror (CI syncs PhysiClaw/docs here) — TRACKED
+physiclaw-docs/           # Local-dev docs checkout — gitignored
 src/
-├── content/docs/        # Split output (en/ + zh/), Starlight reads this — gitignored
-├── content.config.ts    # Starlight docs collection (stock docsLoader)
-├── styles/docs.css       # Material-flavored brand theme (PhysiClaw orange)
+├── components/           # Starlight component overrides (Header, ThemeSelect, …)
+├── content/docs/         # Split output (en/ + zh/), Starlight reads this — gitignored
+├── content.config.ts     # Starlight docs collection (stock docsLoader)
+├── styles/docs.css       # openclaw theme (warm near-black, coral accent)
 └── assets/crab.svg       # logo
 scripts/
-├── sync-docs.mjs         # split physiclaw-docs → src/content/docs/{en,zh} + inject imports
-└── sync-docs.test.mjs    # unit tests (node:test)
-public/favicon.svg
-astro.config.mjs          # Starlight: locales, redirect, sidebar, brand
+├── sync-docs.mjs         # split docs source → src/content/docs/{en,zh} + inject imports
+├── docs-config.mjs       # resolve docs source + validate docs.json → sidebar
+└── *.test.mjs            # unit tests (node:test)
+deploy/                   # GitHub Action template + deploy guide for the PhysiClaw repo
+astro.config.mjs          # Starlight: locales, redirect, sidebar (from docs.json), brand
+vercel.json               # buildCommand: pnpm build (so the sync prebuild runs)
 ```
 
 ## Deployment
 
-Builds to static `dist/` — deploy anywhere. Targeted at the `docs.physiclaw.ai` Vercel project.
-A docs change in `physiclaw/PhysiClaw` (under `docs/**`) triggers a rebuild here (e.g. via a
-`repository_dispatch` Action or Vercel Deploy Hook).
+The static site builds to `dist/` and is served by the `docs.physiclaw.ai` Vercel project. In
+production, a GitHub Action in the **PhysiClaw** repo mirrors `PhysiClaw/docs` into this repo's
+tracked `docs/`, commits, and pushes; Vercel's Git integration builds and deploys the commit. See
+[`deploy/`](./deploy/) for the workflow and one-time setup.
 
 ## License
 

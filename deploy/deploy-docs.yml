@@ -1,0 +1,66 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# COPY THIS FILE INTO THE PhysiClaw REPO AT: .github/workflows/deploy-docs.yml
+#
+# It lives where the docs are authored (PhysiClaw), not in the docs-site renderer.
+# When docs/ changes on the default branch, it MIRRORS PhysiClaw/docs/ into the
+# renderer's tracked ./docs directory and pushes the change. The docs-site repo's
+# Vercel Git integration then builds (pnpm build → sync-docs + astro build) and
+# deploys docs.physiclaw.ai.
+#
+# The renderer stays a pure consumer: all content + docs.json live in PhysiClaw;
+# ./docs in the renderer is just a committed mirror.
+#
+# Required secret on the PhysiClaw repo (Settings → Secrets and variables → Actions):
+#   DOCS_SITE_TOKEN – a PAT (or fine-grained token) with WRITE (contents) access
+#                     to the physiclaw/docs-site repo, so the mirror commit pushes.
+# ─────────────────────────────────────────────────────────────────────────────
+name: Deploy docs
+
+on:
+  push:
+    branches: [main]
+    paths: ['docs/**']
+  workflow_dispatch: # allow manual re-sync
+
+concurrency:
+  group: deploy-docs
+  cancel-in-progress: true
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PhysiClaw (docs source)
+        uses: actions/checkout@v4
+        with:
+          path: source
+
+      - name: Checkout docs-site (renderer)
+        uses: actions/checkout@v4
+        with:
+          repository: physiclaw/docs-site
+          ref: main
+          path: docs-site
+          token: ${{ secrets.DOCS_SITE_TOKEN }}
+
+      # The step you asked about: mirror authored docs into the renderer's ./docs.
+      # --delete makes it a true mirror, so removed/renamed docs propagate.
+      - name: Mirror PhysiClaw/docs → docs-site/docs
+        run: |
+          rm -rf docs-site/docs
+          mkdir -p docs-site/docs
+          rsync -a --delete source/docs/ docs-site/docs/
+
+      - name: Commit & push the mirror (only if it changed)
+        working-directory: docs-site
+        run: |
+          git config user.name  "physiclaw-bot"
+          git config user.email "bot@physiclaw.ai"
+          git add docs
+          if git diff --cached --quiet; then
+            echo "No docs changes to publish."
+          else
+            git commit -m "docs: sync from PhysiClaw@${GITHUB_SHA::7}"
+            git push
+          fi
+      # docs-site's Vercel Git integration builds & deploys on the pushed commit.

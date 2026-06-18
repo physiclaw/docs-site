@@ -1,15 +1,34 @@
-// Loads and validates the doc-owned navigation config (physiclaw-docs/docs.json)
-// and maps it into Starlight's `sidebar` shape. Kept separate from astro.config
-// so the validation has unit tests and the renderer config stays declarative.
+// Loads and validates the doc-owned navigation config (<docs-src>/docs.json) and
+// maps it into Starlight's `sidebar` shape. Kept separate from astro.config so the
+// validation has unit tests and the renderer config stays declarative.
 //
-// docs.json is authored WITH the content (see physiclaw-docs/docs.schema.json):
+// docs.json is authored WITH the content (see the docs source's docs.schema.json):
 // each section lists its pages, in order, by slug — e.g. "start/introduction".
+// The docs source is ./docs in production or ./physiclaw-docs in local dev
+// (resolveDocsSrc).
 
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
-import { sep } from 'node:path';
+import { join, sep } from 'node:path';
 
 const SLUG_EXT = /\.mdx?$/;
 const ZH_SUFFIX = /\.zh\.mdx?$/;
+
+/**
+ * Resolve which directory holds the authored docs. Precedence:
+ *   1. an explicit `DOCS_SRC` env var (override — e.g. `DOCS_SRC=physiclaw-docs` for
+ *      local dev against a separate checkout);
+ *   2. `./docs` — the tracked production mirror that CI syncs PhysiClaw/docs into;
+ *   3. `./physiclaw-docs` — the local-dev checkout (gitignored), used when `docs/`
+ *      isn't present.
+ * @param {NodeJS.ProcessEnv} [env]
+ * @param {string} [cwd]
+ * @returns {string}
+ */
+export function resolveDocsSrc(env = process.env, cwd = process.cwd()) {
+  if (env.DOCS_SRC) return env.DOCS_SRC;
+  if (existsSync(join(cwd, 'docs'))) return 'docs';
+  return 'physiclaw-docs';
+}
 
 /**
  * Validate a parsed docs config and map it to Starlight's `sidebar` array.

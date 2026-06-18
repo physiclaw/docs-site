@@ -1,19 +1,21 @@
 // @ts-check
 // Standalone Starlight docs site for PhysiClaw → docs.physiclaw.ai.
-// Content is authored in physiclaw/PhysiClaw under docs/, checked out into
-// physiclaw-docs/, and split into src/content/docs/{en,zh} by scripts/sync-docs.mjs.
+// Content is authored in physiclaw/PhysiClaw under docs/, mirrored into this repo's
+// docs source (./docs in production, ./physiclaw-docs in local dev — see
+// resolveDocsSrc), and split into src/content/docs/{en,zh} by scripts/sync-docs.mjs.
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
-import { loadDocsConfig } from './scripts/docs-config.mjs';
+import { loadDocsConfig, resolveDocsSrc } from './scripts/docs-config.mjs';
 
 const DEFAULT_LOCALE = 'en'; // ← change this one value to switch the default language
 
-// Navigation lives WITH the content, not in this renderer: physiclaw-docs/docs.json
+// Navigation lives WITH the content, not in this renderer: <docs-src>/docs.json
 // (authored in the code repo alongside the docs) declares the sidebar sections and
 // the order of pages within them, so editing the nav is a docs change, not a
-// renderer change. The loader validates it and maps slugs → Starlight sidebar links;
-// see physiclaw-docs/docs.schema.json for the authoring schema.
-const DOCS_SRC = process.env.DOCS_SRC || 'physiclaw-docs';
+// renderer change. The docs source is ./docs in production (CI mirrors
+// PhysiClaw/docs into it) or ./physiclaw-docs in local dev. The loader validates
+// docs.json and maps slugs → Starlight links; see docs.schema.json for the schema.
+const DOCS_SRC = resolveDocsSrc();
 const { sidebar: SIDEBAR, orphans, strayTranslations } = loadDocsConfig({
   src: DOCS_SRC,
   baseUrl: import.meta.url,
@@ -107,9 +109,8 @@ export default defineConfig({
       },
       // No web fonts — the theme uses the system monospace/sans stacks
       // (ui-monospace / ui-sans-serif), matching openclaw's zero-font-load setup.
-      // Sidebar sections come from physiclaw-docs/docs.json (see SIDEBAR above);
-      // pages within each section are auto-generated from the docs tree and
-      // ordered by each doc's `sidebar.order` frontmatter.
+      // Sidebar sections and the page order within them come from the docs
+      // source's docs.json (validated + mapped into SIDEBAR above).
       sidebar: SIDEBAR,
     }),
   ],
