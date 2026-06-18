@@ -23,7 +23,7 @@ const shouldRenderSearch =
     </div>
     <LanguageSelect />
   </div>
-  <div class="sl-flex print:hidden">
+  <div class="search-wrapper sl-flex print:hidden">
     {shouldRenderSearch && <Search />}
   </div>
   <div class="sl-hidden md:sl-flex print:hidden right-group">
@@ -48,6 +48,15 @@ const shouldRenderSearch =
       align-items: center;
       gap: 1.5rem;
       min-width: 0;
+    }
+
+    /* Let the search column grow to fill the space between the title and the
+       right-hand controls, and centre the (max-width-capped) box within it so
+       it sits toward the middle rather than hugging the title. */
+    .search-wrapper {
+      flex: 1;
+      min-width: 0;
+      justify-content: center;
     }
 
     .title-wrapper {

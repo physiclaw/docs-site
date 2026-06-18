@@ -501,6 +501,12 @@ starlight-file-tree {
 site-search button {
   border-radius: 12px !important;
 }
+/* Wider search box on desktop (Starlight caps it at 22rem). */
+@media (min-width: 50rem) {
+  site-search button[data-open-modal] {
+    max-width: 34rem;
+  }
+}
 
 /* ── Header controls: theme toggle + language select (openclaw) ───────────── */
 
