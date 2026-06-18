@@ -254,6 +254,23 @@ nav.sidebar .sidebar-content { padding-inline: 0.4rem; }
   margin-block: 0.4rem 0.5rem;
 }
 
+/* Groups are not collapsible — drop the caret, make the heading inert (no
+   toggle/cursor), and keep the items visible regardless of any stored open
+   state. Starlight renders each group as <details>; this neutralizes it. */
+.sidebar-content summary {
+  pointer-events: none;
+  cursor: default;
+  list-style: none;
+}
+.sidebar-content summary::-webkit-details-marker { display: none; }
+.sidebar-content summary .caret { display: none; }
+/* Force the item list to stay shown even if a closed state was stored earlier
+   (overrides the UA rule that hides a closed <details>'s contents). */
+.sidebar-content details > ul {
+  display: block !important;
+  content-visibility: visible !important;
+}
+
 /* Nav items: rounded rects, muted → ink on hover, soft+brand when active. */
 .sidebar-content a {
   border-radius: 9px;
