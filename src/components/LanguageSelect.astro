@@ -165,18 +165,35 @@ const current = items.find((i) => i.isCurrent) ?? items[0];
 
 <script>
   class StarlightLanguageSelect extends HTMLElement {
-    constructor() {
-      super();
+    private controller?: AbortController;
+
+    connectedCallback() {
       const details = this.querySelector('details');
       if (!details) return;
-      // Close on outside click or Escape — full-page navigation closes it
-      // naturally when a locale link is followed.
-      document.addEventListener('click', (e) => {
-        if (!details.contains(e.target as Node)) details.open = false;
-      });
-      details.addEventListener('keydown', (e) => {
-        if ((e as KeyboardEvent).key === 'Escape') details.open = false;
-      });
+      // Bind via an AbortController tied to the element's lifetime so the
+      // document-level listener is removed on disconnect — important under view
+      // transitions, where a new element is created on each navigation.
+      this.controller = new AbortController();
+      const { signal } = this.controller;
+      // Close on outside click or Escape (a locale link closes it by navigating).
+      document.addEventListener(
+        'click',
+        (e) => {
+          if (!details.contains(e.target as Node)) details.open = false;
+        },
+        { signal }
+      );
+      details.addEventListener(
+        'keydown',
+        (e) => {
+          if ((e as KeyboardEvent).key === 'Escape') details.open = false;
+        },
+        { signal }
+      );
+    }
+
+    disconnectedCallback() {
+      this.controller?.abort();
     }
   }
   customElements.define('starlight-language-select', StarlightLanguageSelect);

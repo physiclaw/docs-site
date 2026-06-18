@@ -35,7 +35,7 @@ export default defineConfig({
   redirects: { '/': `/${DEFAULT_LOCALE}/` },
   integrations: [
     starlight({
-      title: 'PhysiClaw',
+      title: 'PhysiClaw Doc',
       tagline: 'The AI that physically uses your phone.',
       logo: { src: './src/assets/crab.svg', alt: 'PhysiClaw' },
       favicon: '/favicon.svg',
@@ -46,11 +46,13 @@ export default defineConfig({
       // ThemeSelect: a two-state light/dark toggle (no "auto", no dropdown).
       // Header: moves the language select next to the site title.
       // LanguageSelect: a custom, styled dropdown menu (not a native <select>).
+      // Head: adds Astro's ClientRouter for smooth view-transition navigation.
       components: {
         PageTitle: './src/components/PageTitle.astro',
         ThemeSelect: './src/components/ThemeSelect.astro',
         Header: './src/components/Header.astro',
         LanguageSelect: './src/components/LanguageSelect.astro',
+        Head: './src/components/Head.astro',
       },
       // Code blocks, openclaw-style: GitHub syntax palette (the colors openclaw
       // uses) on its dark #101010 / light surface, 9px rounded, soft elevation.

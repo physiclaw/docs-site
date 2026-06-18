@@ -126,6 +126,17 @@
    Reserving the gutter keeps the width constant → no shift. */
 html {
   scrollbar-gutter: stable;
+  /* Offset anchor jumps (TOC, heading links) below the sticky header so the
+     target heading isn't hidden under it. */
+  scroll-padding-top: calc(var(--sl-nav-height) + 1rem);
+}
+
+/* Smooth-scroll TOC / heading-anchor jumps instead of the instant snap, unless
+   the user prefers reduced motion. */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
 }
 
 body {
@@ -270,6 +281,9 @@ nav.sidebar .sidebar-content { padding-inline: 0.4rem; }
   display: block !important;
   content-visibility: visible !important;
 }
+
+/* Drop the vertical guide line to the left of nested nav items. */
+.sidebar-content ul ul li { border-inline-start: 0; }
 
 /* Nav items: rounded rects, muted → ink on hover, soft+brand when active. */
 .sidebar-content a {

@@ -20,12 +20,16 @@
 </starlight-theme-toggle>
 
 <script>
-  customElements.define(
-    'starlight-theme-toggle',
-    class extends HTMLElement {
-      constructor() {
-        super();
-        this.querySelector('button')?.addEventListener('click', () => {
+  class StarlightThemeToggle extends HTMLElement {
+    private controller?: AbortController;
+
+    connectedCallback() {
+      const button = this.querySelector('button');
+      if (!button) return;
+      this.controller = new AbortController();
+      button.addEventListener(
+        'click',
+        () => {
           const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
           document.documentElement.dataset.theme = next;
           try {
@@ -33,8 +37,14 @@
           } catch {
             /* localStorage may be unavailable (private mode) — theme still applies for this page. */
           }
-        });
-      }
+        },
+        { signal: this.controller.signal }
+      );
     }
-  );
+
+    disconnectedCallback() {
+      this.controller?.abort();
+    }
+  }
+  customElements.define('starlight-theme-toggle', StarlightThemeToggle);
 </script>
