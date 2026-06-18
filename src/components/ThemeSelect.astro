@@ -1,0 +1,40 @@
+---
+// Overrides Starlight's ThemeSelect (a 3-option Auto/Light/Dark <select>) with
+// a plain two-state light↔dark toggle — no "auto", no dropdown list. It reuses
+// Starlight's own `starlight-theme` localStorage key, which the inlined
+// ThemeProvider reads to set data-theme before paint, so there's no FOUC.
+---
+
+<starlight-theme-toggle>
+  <button type="button" aria-label="Toggle light / dark theme">
+    <svg class="theme-icon sun" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+    </svg>
+    <svg class="theme-icon moon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+    </svg>
+  </button>
+</starlight-theme-toggle>
+
+<script>
+  customElements.define(
+    'starlight-theme-toggle',
+    class extends HTMLElement {
+      constructor() {
+        super();
+        this.querySelector('button')?.addEventListener('click', () => {
+          const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+          document.documentElement.dataset.theme = next;
+          try {
+            localStorage.setItem('starlight-theme', next);
+          } catch {
+            /* localStorage may be unavailable (private mode) — theme still applies for this page. */
+          }
+        });
+      }
+    }
+  );
+</script>

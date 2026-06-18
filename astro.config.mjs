@@ -42,8 +42,16 @@ export default defineConfig({
       defaultLocale: DEFAULT_LOCALE,
       locales: LOCALES,
       customCss: ['./src/styles/docs.css'],
-      // Adds a breadcrumb path above the page title.
-      components: { PageTitle: './src/components/PageTitle.astro' },
+      // PageTitle: breadcrumb path above the title.
+      // ThemeSelect: a two-state light/dark toggle (no "auto", no dropdown).
+      // Header: moves the language select next to the site title.
+      // LanguageSelect: a custom, styled dropdown menu (not a native <select>).
+      components: {
+        PageTitle: './src/components/PageTitle.astro',
+        ThemeSelect: './src/components/ThemeSelect.astro',
+        Header: './src/components/Header.astro',
+        LanguageSelect: './src/components/LanguageSelect.astro',
+      },
       // Code blocks, openclaw-style: GitHub syntax palette (the colors openclaw
       // uses) on its dark #101010 / light surface, 9px rounded, soft elevation.
       // Background/border/shadow are CSS vars so they track the theme toggle.

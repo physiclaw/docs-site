@@ -119,6 +119,15 @@
 
 /* ── Typography ───────────────────────────────────────────────────────────── */
 
+/* Always reserve the vertical-scrollbar gutter. Without this, short pages (no
+   scrollbar) and long pages (scrollbar) get different layout widths, so the
+   auto-centered article jumps horizontally on each navigation — it paints a
+   touch right (full width), then snaps left once the scrollbar claims ~15px.
+   Reserving the gutter keeps the width constant → no shift. */
+html {
+  scrollbar-gutter: stable;
+}
+
 body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -422,6 +431,65 @@ starlight-file-tree {
 site-search button {
   border-radius: 12px !important;
 }
+
+/* ── Header controls: theme toggle + language select (openclaw) ───────────── */
+
+/* The language select is a custom dropdown component (LanguageSelect.astro
+   → <starlight-language-select>) and styles itself; nothing needed here. */
+
+/* Social link (GitHub): show its label — Starlight ships it as an sr-only span
+   before the icon, so reveal it and order it after the icon → "[icon] GitHub".
+   Default ink (not the accent), a touch larger, brightening to accent on hover. */
+.social-icons a {
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--sl-font-display);
+  font-size: 0.8125rem; /* 13px */
+  font-weight: 600;
+  color: var(--sl-color-white);
+  text-decoration: none;
+}
+.social-icons a:hover { color: var(--sl-color-text-accent); }
+.social-icons a svg { width: 1.1rem; height: 1.1rem; }
+/* Label sits in muted grey while the icon keeps the default ink. */
+.social-icons a .sr-only { color: var(--sl-color-gray-3); }
+.social-icons a .sr-only {
+  order: 1; /* icon (no order, 0) stays left; label moves to the right */
+  position: static;
+  width: auto;
+  height: auto;
+  margin: 0;
+  padding: 0;
+  clip: auto;
+  clip-path: none;
+  overflow: visible;
+  white-space: nowrap;
+}
+
+/* Theme toggle (custom ThemeSelect override): a single icon button, light↔dark.
+   Show the icon for the active theme — moon in dark, sun in light. */
+starlight-theme-toggle button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--sl-color-gray-2);
+  cursor: pointer;
+  transition: background-color 0.16s ease, color 0.16s ease;
+}
+starlight-theme-toggle button:hover,
+starlight-theme-toggle button:focus-visible {
+  color: var(--sl-color-white);
+  background: color-mix(in srgb, var(--oc-paper) 68%, transparent);
+}
+.theme-icon { width: 1.25rem; height: 1.25rem; }
+:root[data-theme='dark'] .theme-icon.sun { display: none; }
+:root[data-theme='light'] .theme-icon.moon { display: none; }
 
 /* ── Tables (openclaw) ────────────────────────────────────────────────────── */
 
