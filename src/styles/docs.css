@@ -359,11 +359,24 @@ starlight-toc a[aria-current='true'] {
   width: 1.85rem;
   height: 1.85rem;
   opacity: 0.6;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  transition: border-color 0.16s ease, background 0.16s ease, opacity 0.16s ease;
 }
+/* Hover: accent edge + a subtle warm coral tint (the grey wash read muddy on
+   the dark code header). */
 .expressive-code .frame .copy button:hover,
-.expressive-code .frame .copy button:focus-visible { opacity: 1; }
+.expressive-code .frame .copy button:focus-visible {
+  opacity: 1;
+  border-color: var(--sl-color-accent);
+  background: color-mix(in srgb, var(--sl-color-accent) 14%, transparent);
+}
 /* No border box around the icon (EC draws it via button::before). */
 .expressive-code .frame .copy button::before { display: none; }
+/* EC paints its own grey hover fill through an inner <div> (its opacity ramps
+   up on hover) — remove it so our button background/border show instead. */
+.expressive-code .frame .copy button div { display: none; }
 
 /* openclaw copy icon (Lucide "copy"), muted grey, drawn via EC's mask layer.
    The SVG lives in --oc-icon so both mask properties reference it once; the
@@ -424,6 +437,34 @@ starlight-file-tree {
 .sl-link-card:hover {
   border-color: var(--sl-color-accent);
   background: color-mix(in srgb, var(--oc-soft) 34%, transparent);
+}
+
+/* ── Prev / next pagination (openclaw — compact) ──────────────────────────── */
+
+/* Starlight's default cards are large (1rem pad, 2xl title, shadow). Slim them
+   down: tighter padding, a normal-sized title, smaller arrow, flat with the
+   openclaw card hover. Unlayered → wins over Starlight's @layer rules. */
+.pagination-links a {
+  gap: 0.5rem;
+  padding: 0.6rem 0.8rem;
+  border-color: var(--sl-color-hairline-light);
+  border-radius: 8px;
+  box-shadow: none;
+  font-size: 0.75rem; /* the "Previous"/"Next" eyebrow */
+  transition: border-color 0.16s ease, background 0.16s ease;
+}
+.pagination-links a:hover {
+  border-color: var(--sl-color-accent);
+  background: color-mix(in srgb, var(--oc-soft) 34%, transparent);
+}
+.pagination-links .link-title {
+  font-family: var(--sl-font-display);
+  font-size: 0.9375rem; /* 15px — was --sl-text-2xl */
+  font-weight: 700;
+}
+.pagination-links svg {
+  width: 1.1rem;
+  height: 1.1rem;
 }
 
 /* ── Search button (openclaw) ─────────────────────────────────────────────── */
