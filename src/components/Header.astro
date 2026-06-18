@@ -23,10 +23,7 @@ const shouldRenderSearch =
     </div>
     <LanguageSelect />
   </div>
-  {/* Persist the search across view transitions: Starlight mounts the Pagefind
-     UI on DOMContentLoaded (fires once), so a swapped-in dialog would be blank.
-     Keeping the node alive preserves the initialized search + its listeners. */}
-  <div class="search-wrapper sl-flex print:hidden" transition:persist="site-search">
+  <div class="search-wrapper sl-flex print:hidden">
     {shouldRenderSearch && <Search />}
   </div>
   <div class="sl-hidden md:sl-flex print:hidden right-group">
