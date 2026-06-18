@@ -4,8 +4,32 @@
 // physiclaw-docs/, and split into src/content/docs/{en,zh} by scripts/sync-docs.mjs.
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
+import { loadDocsConfig } from './scripts/docs-config.mjs';
 
 const DEFAULT_LOCALE = 'en'; // ← change this one value to switch the default language
+
+// Navigation lives WITH the content, not in this renderer: physiclaw-docs/docs.json
+// (authored in the code repo alongside the docs) declares the sidebar sections and
+// the order of pages within them, so editing the nav is a docs change, not a
+// renderer change. The loader validates it and maps slugs → Starlight sidebar links;
+// see physiclaw-docs/docs.schema.json for the authoring schema.
+const DOCS_SRC = process.env.DOCS_SRC || 'physiclaw-docs';
+const { sidebar: SIDEBAR, orphans, strayTranslations } = loadDocsConfig({
+  src: DOCS_SRC,
+  baseUrl: import.meta.url,
+});
+if (orphans.length > 0) {
+  console.warn(
+    `⚠ docs.json: ${orphans.length} page(s) are not listed in any sidebar section ` +
+      `and will be unreachable from the nav: ${orphans.join(', ')}`
+  );
+}
+if (strayTranslations.length > 0) {
+  console.warn(
+    `⚠ docs: ${strayTranslations.length} translation(s) have no default-locale (en) source — ` +
+      `they can't fall back or appear in the nav; add the source or remove them: ${strayTranslations.join(', ')}`
+  );
+}
 
 // openclaw-style code headers: show the language (BASH, JSON5, …) as the frame
 // title where Expressive Code would otherwise draw terminal dots / a blank tab.
@@ -83,14 +107,10 @@ export default defineConfig({
       },
       // No web fonts — the theme uses the system monospace/sans stacks
       // (ui-monospace / ui-sans-serif), matching openclaw's zero-font-load setup.
-      // Auto-generated from the docs tree (sync-docs.mjs writes to Starlight's
-      // default path); ordered by each doc's `sidebar.order` frontmatter.
-      sidebar: [
-        { label: 'Start', translations: { 'zh-CN': '开始' }, items: [{ autogenerate: { directory: 'start' } }] },
-        { label: 'Concepts', translations: { 'zh-CN': '原理' }, items: [{ autogenerate: { directory: 'concepts' } }] },
-        { label: 'Hardware', translations: { 'zh-CN': '硬件' }, items: [{ autogenerate: { directory: 'hardware' } }] },
-        { label: 'Reference', translations: { 'zh-CN': '参考' }, items: [{ autogenerate: { directory: 'reference' } }] },
-      ],
+      // Sidebar sections come from physiclaw-docs/docs.json (see SIDEBAR above);
+      // pages within each section are auto-generated from the docs tree and
+      // ordered by each doc's `sidebar.order` frontmatter.
+      sidebar: SIDEBAR,
     }),
   ],
 });

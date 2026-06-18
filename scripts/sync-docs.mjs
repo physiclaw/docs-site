@@ -22,6 +22,11 @@ export const LOCALE_BY_SUFFIX = { '': 'en', '.zh': 'zh' };
 
 const MARKDOWN = new Set(['.md', '.mdx']);
 
+// Root-level config files that belong to the docs source but are NOT content —
+// read directly by the renderer (astro.config), so they must not be copied into
+// the content collection.
+const CONFIG_FILES = new Set(['docs.json', 'docs.schema.json']);
+
 // Starlight components an author may use without importing them — the sync step
 // injects the import so docs read like plain Markdown.
 export const STARLIGHT_COMPONENTS = [
@@ -111,6 +116,10 @@ export async function syncDocs({ src, out }) {
     const parts = rel.split(sep);
     const name = parts.pop();
     const ext = extname(name);
+
+    // Skip root-level config files (docs.json etc.) — they're read by the
+    // renderer, not part of the content.
+    if (parts.length === 0 && CONFIG_FILES.has(name)) continue;
 
     if (MARKDOWN.has(ext)) {
       // Markdown: route to one locale, trimming the .zh suffix.
