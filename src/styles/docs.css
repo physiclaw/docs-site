@@ -1,0 +1,291 @@
+/* ──────────────────────────────────────────────────────────────────────────
+   PhysiClaw docs theme — Material Design 3 over Starlight.
+   Brand palette from the landing page (safety-orange = Material "primary",
+   near-black surfaces, Inter + JetBrains Mono), expressed through Material's
+   shape, elevation, and state-layer language: rounded nav pills, soft
+   elevation, tonal hovers, generous spacing.
+   ────────────────────────────────────────────────────────────────────────── */
+
+:root {
+  /* Primary — the landing's safety orange */
+  --sl-color-accent-low: #3a1a0d;
+  --sl-color-accent: #e85d26;
+  --sl-color-accent-high: #f7b79b;
+
+  --sl-font: 'Inter', 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --sl-font-mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', ui-monospace, monospace;
+
+  --sl-line-height: 1.75;
+  --sl-nav-height: 4rem;
+
+  /* Material type scale — comfortable sizes, open leading */
+  --sl-text-h1: 2.25rem;   /* ~36px  headline */
+  --sl-text-h2: 1.625rem;  /* ~26px  section  */
+  --sl-text-h3: 1.3rem;    /* ~21px  subsection */
+  --sl-text-h4: 1.1rem;    /* ~18px */
+  --sl-text-h5: 1rem;
+  --sl-line-height-headings: 1.3;
+
+  /* Material shape scale */
+  --md-shape-sm: 8px;
+  --md-shape-md: 12px;
+  --md-shape-lg: 16px;
+  --md-shape-xl: 28px;
+  --md-shape-pill: 9999px;
+
+  /* Material elevation (tuned for a dark surface) */
+  --md-elevation-1: 0 1px 2px rgba(0, 0, 0, 0.30), 0 1px 3px 1px rgba(0, 0, 0, 0.14);
+  --md-elevation-2: 0 1px 2px rgba(0, 0, 0, 0.30), 0 2px 6px 2px rgba(0, 0, 0, 0.16);
+  --md-elevation-3: 0 4px 8px 3px rgba(0, 0, 0, 0.16), 0 1px 3px rgba(0, 0, 0, 0.30);
+}
+
+/* Dark theme (default) — the landing's tokens, 1:1 */
+:root,
+:root[data-theme='dark'] {
+  --sl-color-white: #f4f4f6;
+  --sl-color-gray-1: #e8e8ec;
+  --sl-color-gray-2: #b4b4bc;
+  --sl-color-gray-3: #8a8a94;
+  --sl-color-gray-4: #5a5a64;
+  --sl-color-gray-5: #2a2a2e;
+  --sl-color-gray-6: #1a1a1e;
+  --sl-color-gray-7: #141416;
+  --sl-color-black: #0a0a0b;
+
+  --sl-color-bg: #0a0a0b;
+  --sl-color-bg-nav: color-mix(in srgb, #0a0a0b 78%, transparent);
+  --sl-color-bg-sidebar: #0d0d10;
+  --sl-color-bg-inline-code: #1a1a1e;
+  --sl-color-hairline: #1c1c20;
+  --sl-color-hairline-light: #2a2a2e;
+  --sl-color-hairline-shade: #141416;
+  --sl-color-text-accent: #f0743f;
+  --sl-color-text-invert: #0a0a0b;
+
+  /* Material tonal surfaces derived from primary */
+  --md-primary-container: color-mix(in srgb, var(--sl-color-accent) 20%, transparent);
+  --md-primary-container-hover: color-mix(in srgb, var(--sl-color-accent) 28%, transparent);
+}
+
+/* Light theme — the landing's light tokens */
+:root[data-theme='light'] {
+  --sl-color-white: #15151a;
+  --sl-color-gray-1: #1a1a1e;
+  --sl-color-gray-2: #3a3a42;
+  --sl-color-gray-3: #5a5a64;
+  --sl-color-gray-4: #8a8a94;
+  --sl-color-gray-5: #d6d6d0;
+  --sl-color-gray-6: #e8e8e4;
+  --sl-color-gray-7: #f4f4f2;
+  --sl-color-black: #fafaf9;
+
+  --sl-color-bg: #fafaf9;
+  --sl-color-bg-nav: color-mix(in srgb, #fafaf9 80%, transparent);
+  --sl-color-bg-sidebar: #f3f3f1;
+  --sl-color-bg-inline-code: #ececea;
+  --sl-color-hairline: #e2e2dc;
+  --sl-color-hairline-light: #d6d6d0;
+  --sl-color-accent-low: #f6dccd;
+  --sl-color-accent: #d4511a;
+  --sl-color-accent-high: #7a2e0e;
+  --sl-color-text-accent: #c2480f;
+
+  --md-primary-container: color-mix(in srgb, var(--sl-color-accent) 14%, transparent);
+  --md-primary-container-hover: color-mix(in srgb, var(--sl-color-accent) 20%, transparent);
+  --md-elevation-1: 0 1px 2px rgba(0, 0, 0, 0.08), 0 1px 3px 1px rgba(0, 0, 0, 0.06);
+  --md-elevation-2: 0 1px 2px rgba(0, 0, 0, 0.10), 0 2px 6px 2px rgba(0, 0, 0, 0.07);
+  --md-elevation-3: 0 4px 8px 3px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.10);
+}
+
+/* ── Typography ───────────────────────────────────────────────────────────── */
+
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Headings: Material headline feel — medium weight, relaxed tracking,
+   open line-height. Not the heavy/tight technical look. */
+.sl-markdown-content :is(h1, h2, h3, h4, h5),
+.content-panel h1 {
+  font-weight: 600;
+  line-height: var(--sl-line-height-headings);
+}
+.sl-markdown-content h1,
+.content-panel h1 { letter-spacing: -0.018em; }
+.sl-markdown-content h2 { letter-spacing: -0.012em; }
+.sl-markdown-content :is(h3, h4) { letter-spacing: -0.004em; }
+
+/* Comfortable reading: 17px body, open leading, clear block rhythm,
+   and generous breathing room before each section heading. */
+.sl-markdown-content {
+  font-size: 1.0625rem;
+  line-height: 1.75;
+}
+.sl-markdown-content > * + * { margin-top: 1.15rem; }
+.sl-markdown-content > :first-child { margin-top: 0; }
+
+.sl-markdown-content h2 { margin-top: 2.75rem; margin-bottom: 0.35rem; }
+.sl-markdown-content h3 { margin-top: 2.1rem; margin-bottom: 0.2rem; }
+.sl-markdown-content h4 { margin-top: 1.65rem; margin-bottom: 0.2rem; }
+.sl-markdown-content :is(h2, h3, h4) + * { margin-top: 0.7rem; }
+
+.sl-markdown-content :is(ul, ol) { padding-inline-start: 1.4rem; }
+.sl-markdown-content li + li { margin-top: 0.4rem; }
+.sl-markdown-content li > ul { margin-top: 0.4rem; }
+
+/* A touch more air around tables and callouts */
+.sl-markdown-content :is(table, .starlight-aside, .expressive-code) {
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+/* ── Top app bar ──────────────────────────────────────────────────────────── */
+
+header.header {
+  border-bottom: 1px solid var(--sl-color-hairline);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+.site-title {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--sl-color-white);
+}
+.site-title img { height: 1.6rem; }
+
+/* ── Sidebar = Material navigation drawer ─────────────────────────────────── */
+
+nav.sidebar .sidebar-content { padding-inline: 0.6rem; }
+
+/* Natural, sentence-case group headings */
+.sidebar-content .large {
+  font-family: var(--sl-font);
+  font-weight: 600;
+  font-size: 0.8rem;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--sl-color-gray-2);
+  padding-inline-start: 1rem;
+  margin-block: 0.4rem 0.1rem;
+}
+
+/* Pill-shaped nav items with a tonal state layer */
+.sidebar-content a {
+  border-radius: var(--md-shape-pill);
+  border: none;
+  padding: 0.5rem 1rem;
+  margin-block: 2px;
+  color: var(--sl-color-gray-2);
+  line-height: 1.4;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+.sidebar-content a:hover {
+  /* Material state layer: on-surface @ ~8% */
+  background: color-mix(in srgb, var(--sl-color-white) 8%, transparent);
+  color: var(--sl-color-white);
+}
+.sidebar-content a[aria-current='page'] {
+  background: var(--md-primary-container);
+  color: var(--sl-color-text-accent);
+  font-weight: 600;
+}
+.sidebar-content a[aria-current='page']:hover {
+  background: var(--md-primary-container-hover);
+}
+
+/* ── Right-hand table of contents ─────────────────────────────────────────── */
+
+starlight-toc a {
+  border-radius: var(--md-shape-sm);
+}
+starlight-toc a[aria-current='true'] {
+  color: var(--sl-color-text-accent);
+  font-weight: 600;
+}
+
+/* ── Links & inline code ──────────────────────────────────────────────────── */
+
+.sl-markdown-content a:not(:where(.not-content *)) {
+  color: var(--sl-color-text-accent);
+  text-underline-offset: 0.18em;
+  text-decoration-thickness: 1px;
+}
+.sl-markdown-content code:not(:where(.not-content *)) {
+  font-size: 0.85em;
+  background: var(--sl-color-bg-inline-code);
+  border-radius: var(--md-shape-sm);
+  padding: 0.12em 0.4em;
+}
+
+/* Code blocks: rounded Material surface with soft elevation */
+.expressive-code .frame {
+  border-radius: var(--md-shape-md);
+  box-shadow: var(--md-elevation-1);
+  overflow: hidden;
+}
+
+/* ── Cards = Material elevated/filled cards ───────────────────────────────── */
+
+.card {
+  border: 1px solid var(--sl-color-hairline);
+  border-radius: var(--md-shape-lg);
+  background: var(--sl-color-gray-7);
+  box-shadow: var(--md-elevation-1);
+  transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+}
+.card:hover {
+  box-shadow: var(--md-elevation-3);
+  transform: translateY(-2px);
+  border-color: var(--sl-color-hairline-light);
+}
+/* Icon sits in a tonal "primary container" chip */
+.card .icon {
+  color: var(--sl-color-text-accent);
+  background: var(--md-primary-container);
+  border-radius: var(--md-shape-md);
+  padding: 0.45rem;
+  box-sizing: content-box;
+}
+
+/* LinkCards: rounded, state layer on hover */
+.sl-link-card {
+  border: 1px solid var(--sl-color-hairline);
+  border-radius: var(--md-shape-md);
+  box-shadow: var(--md-elevation-1);
+  transition: box-shadow 0.2s ease, background-color 0.2s ease;
+}
+.sl-link-card:hover {
+  box-shadow: var(--md-elevation-2);
+  background: color-mix(in srgb, var(--sl-color-white) 4%, transparent);
+}
+
+/* ── Search "button" → Material filled tonal field ────────────────────────── */
+
+site-search button {
+  border-radius: var(--md-shape-pill) !important;
+}
+
+/* ── Asides / callouts: rounded Material containers ───────────────────────── */
+
+.starlight-aside {
+  border-radius: var(--md-shape-md);
+  border-left-width: 4px;
+}
+
+/* ── Blockquotes: accent-tinted ───────────────────────────────────────────── */
+
+.sl-markdown-content blockquote {
+  border-inline-start: 3px solid var(--sl-color-accent);
+  background: color-mix(in srgb, var(--sl-color-accent) 8%, transparent);
+  border-radius: 0 var(--md-shape-md) var(--md-shape-md) 0;
+  padding: 0.85rem 1.25rem;
+  color: var(--sl-color-gray-1);
+}
+.sl-markdown-content blockquote :first-child { margin-top: 0; }
+.sl-markdown-content blockquote :last-child { margin-bottom: 0; }
+
+::selection {
+  background: var(--sl-color-accent);
+  color: #fff;
+}

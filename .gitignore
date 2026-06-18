@@ -1,0 +1,11 @@
+node_modules
+.astro
+.vercel
+dist
+.DS_Store
+.vscode
+
+# Original docs checked out from physiclaw/PhysiClaw (co-located .mdx / .zh.mdx)
+physiclaw-docs
+# Generated Starlight content, split by locale (en/ + zh/) by scripts/sync-docs.mjs
+src/content/docs
