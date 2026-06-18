@@ -107,7 +107,7 @@ src/
 ├── components/           # Starlight component overrides (Header, ThemeSelect, …)
 ├── content/docs/         # Split output (en/ + zh/), Starlight reads this — gitignored
 ├── content.config.ts     # Starlight docs collection (stock docsLoader)
-├── styles/docs.css       # openclaw theme (warm near-black, coral accent)
+├── styles/docs.css       # docs theme (warm near-black, coral accent)
 └── assets/crab.svg       # logo
 scripts/
 ├── sync-docs.mjs         # split docs source → src/content/docs/{en,zh} + inject imports

@@ -69,7 +69,7 @@ const current = items.find((i) => i.isCurrent) ?? items[0];
     position: relative;
   }
 
-  /* Trigger — globe + current language + chevron, openclaw header chrome. */
+  /* Trigger — globe + current language + chevron, matching the header chrome. */
   .lang-select summary {
     display: flex;
     align-items: center;
@@ -94,7 +94,7 @@ const current = items.find((i) => i.isCurrent) ?? items[0];
   .lang-select summary:hover,
   .lang-select details[open] summary {
     color: var(--sl-color-white);
-    background: color-mix(in srgb, var(--oc-paper) 68%, transparent);
+    background: color-mix(in srgb, var(--pc-paper) 68%, transparent);
   }
   .lang-select .globe {
     width: 1.05rem;
@@ -120,7 +120,7 @@ const current = items.find((i) => i.isCurrent) ?? items[0];
     margin: 0;
     padding: 0.3rem;
     list-style: none;
-    background: var(--oc-paper-2);
+    background: var(--pc-paper-2);
     border: 1px solid var(--sl-color-hairline-light);
     border-radius: 11px;
     box-shadow: 0 16px 40px rgba(0, 0, 0, 0.28);
@@ -143,14 +143,14 @@ const current = items.find((i) => i.isCurrent) ?? items[0];
       color 0.16s ease;
   }
   .lang-select .menu a:hover {
-    background: color-mix(in srgb, var(--oc-paper) 80%, transparent);
+    background: color-mix(in srgb, var(--pc-paper) 80%, transparent);
     color: var(--sl-color-white);
   }
   /* Active locale — brand wash + a trailing check. */
   .lang-select .menu a[aria-current='true'] {
     color: var(--sl-color-text-accent);
     font-weight: 700;
-    background: var(--oc-soft);
+    background: var(--pc-soft);
   }
   .lang-select .menu a[aria-current='true']::after {
     content: '';

@@ -33,7 +33,7 @@ if (strayTranslations.length > 0) {
   );
 }
 
-// openclaw-style code headers: show the language (BASH, JSON5, …) as the frame
+// Custom code headers: show the language (BASH, JSON5, …) as the frame
 // title where Expressive Code would otherwise draw terminal dots / a blank tab.
 // CSS (docs.css) then hides the dots, strips the tab chrome, and left-aligns it.
 const codeLanguageLabel = {
@@ -78,24 +78,24 @@ export default defineConfig({
         Header: './src/components/Header.astro',
         LanguageSelect: './src/components/LanguageSelect.astro',
       },
-      // Code blocks, openclaw-style: GitHub syntax palette (the colors openclaw
-      // uses) on its dark #101010 / light surface, 9px rounded, soft elevation.
+      // Code blocks: the GitHub syntax palette on a dark #101010 / light
+      // surface, 9px rounded, soft elevation.
       // Background/border/shadow are CSS vars so they track the theme toggle.
       expressiveCode: {
         themes: ['github-dark-default', 'github-light-default'],
         plugins: [codeLanguageLabel],
         styleOverrides: {
           borderRadius: '9px',
-          borderColor: 'var(--oc-code-border)',
-          codeBackground: 'var(--oc-code-block)',
+          borderColor: 'var(--pc-code-border)',
+          codeBackground: 'var(--pc-code-block)',
           codePaddingBlock: '12px',
           codePaddingInline: '14px',
           frames: {
-            frameBoxShadowCssValue: 'var(--oc-code-shadow)',
-            editorTabBarBackground: 'var(--oc-code-block)',
-            editorActiveTabBackground: 'var(--oc-code-block)',
-            terminalBackground: 'var(--oc-code-block)',
-            terminalTitlebarBackground: 'var(--oc-code-block)',
+            frameBoxShadowCssValue: 'var(--pc-code-shadow)',
+            editorTabBarBackground: 'var(--pc-code-block)',
+            editorActiveTabBackground: 'var(--pc-code-block)',
+            terminalBackground: 'var(--pc-code-block)',
+            terminalTitlebarBackground: 'var(--pc-code-block)',
           },
         },
       },
@@ -106,7 +106,7 @@ export default defineConfig({
         baseUrl: 'https://github.com/physiclaw/PhysiClaw/edit/main/docs/',
       },
       // No web fonts — the theme uses the system monospace/sans stacks
-      // (ui-monospace / ui-sans-serif), matching openclaw's zero-font-load setup.
+      // (ui-monospace / ui-sans-serif) for a zero-font-load setup.
       // Sidebar sections and the page order within them come from the docs
       // source's docs.json (validated + mapped into SIDEBAR above).
       sidebar: SIDEBAR,
