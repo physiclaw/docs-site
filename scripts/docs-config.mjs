@@ -13,6 +13,11 @@ import { join, sep } from 'node:path';
 const SLUG_EXT = /\.mdx?$/;
 const ZH_SUFFIX = /\.zh\.mdx?$/;
 
+// Root-level files that live in the docs source but are NOT content: renderer
+// config (read by astro.config) and the authoring README. They must not be
+// copied into the content collection, become pages, or count as orphans.
+export const NON_CONTENT_FILES = new Set(['docs.json', 'docs.schema.json', 'README.md']);
+
 /**
  * Resolve which directory holds the authored docs. Precedence:
  *   1. an explicit `DOCS_SRC` env var (override — e.g. `DOCS_SRC=physiclaw-docs` for
@@ -147,10 +152,10 @@ export function loadDocsConfig({ src, baseUrl }) {
     );
   }
 
-  // Scan the source tree once.
+  // Scan the source tree once (markdown only, minus root-level non-content files).
   const files = readdirSync(srcUrl, { recursive: true })
     .map((p) => String(p).split(sep).join('/'))
-    .filter((p) => SLUG_EXT.test(p));
+    .filter((p) => SLUG_EXT.test(p) && !(!p.includes('/') && NON_CONTENT_FILES.has(p)));
   const defaultSlugs = new Set(
     files.filter((p) => !ZH_SUFFIX.test(p)).map((p) => p.replace(SLUG_EXT, ''))
   );

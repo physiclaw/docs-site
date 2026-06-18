@@ -54,8 +54,8 @@ jobs:
       - name: Commit & push the mirror (only if it changed)
         working-directory: docs-site
         run: |
-          git config user.name  "physiclaw-bot"
-          git config user.email "bot@physiclaw.ai"
+          git config user.name  "physiclaw-docs"
+          git config user.email "qiaoqianda@gmail.com"
           git add docs
           if git diff --cached --quiet; then
             echo "No docs changes to publish."
