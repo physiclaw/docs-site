@@ -330,26 +330,38 @@ starlight-toc a[aria-current='true'] {
    rules below turn EC's terminal-dots / editor-tab header into one openclaw
    bar — the uppercase language at the left, a thin divider beneath. */
 
-/* Terminal frames: drop the traffic-light dots + their own divider, left-align. */
-.expressive-code .frame.is-terminal .header { justify-content: flex-start; }
-.expressive-code .frame.is-terminal .header::before,
-.expressive-code .frame.is-terminal .header::after { display: none; }
+/* Unify editor (has-title) and terminal frame headers into ONE identical bar.
+   EC styles the two types very differently — terminal frames get traffic-light
+   dots and a top/side border box, while editor frames get an inset tab with a
+   left indent, a tab-bar gradient and an active-tab indicator. Flatten both to
+   the same openclaw header: #101010 surface, matching top/side border + a
+   hairline divider beneath, the uppercase language label at the left. */
+.expressive-code .frame.is-terminal .header,
+.expressive-code .frame.has-title:not(.is-terminal) .header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: var(--oc-code-header-h);
+  padding: 0;
+  background: var(--oc-code-block);
+  border: 1px solid var(--oc-code-border);
+  border-bottom: 1px solid var(--sl-color-gray-6);
+  border-radius: 9px 9px 0 0;
+}
 
-/* Editor frames: strip the tab chrome so the title reads as a plain label. */
-.expressive-code .frame.has-title:not(.is-terminal) .header::before { display: none; }
+/* Drop EC's per-type chrome: terminal dots + editor tab-bar border box (both
+   drawn via .header::before) and the editor active-tab indicator (.title::after,
+   the short red line above the label). */
+.expressive-code .frame .header::before,
+.expressive-code .frame .header::after,
+.expressive-code .frame .title::after { display: none; }
+
+/* Editor active tab → a plain label (no tab background/border/radius/margin). */
 .expressive-code .frame.has-title:not(.is-terminal) .title {
   background: transparent;
   border: 0;
+  border-radius: 0;
   margin: 0;
-}
-
-/* Shared header bar: a slim row with the uppercase language label (openclaw's
-   .docs-chat-code-head spec) at the left and a thin divider beneath. */
-.expressive-code .frame .header {
-  display: flex;
-  align-items: center;
-  min-height: var(--oc-code-header-h);
-  border-bottom: 1px solid var(--sl-color-gray-6);
 }
 .expressive-code .frame .title {
   padding-block: 0;
@@ -584,6 +596,17 @@ starlight-theme-toggle button:focus-visible {
   font-weight: 720;
 }
 
+/* ── Tabs (openclaw) ──────────────────────────────────────────────────────── */
+
+/* Starlight underlines the whole tab row (a full-width separator) plus a grey
+   line under every tab, with the selected one in accent. Drop the separator and
+   the inactive underlines — keep only the active tab's accent indicator. */
+starlight-tabs [role='tablist'] { border-bottom: 0; }
+starlight-tabs [role='tab'] { box-shadow: none; }
+starlight-tabs [role='tab'][aria-selected='true'] {
+  box-shadow: 0 2px 0 var(--sl-color-text-accent);
+}
+
 /* ── Asides / callouts (openclaw) ─────────────────────────────────────────── */
 
 .starlight-aside--note    { --aside-accent: var(--oc-callout-note); }
@@ -609,11 +632,16 @@ starlight-theme-toggle button:focus-visible {
 
 /* ── Blockquotes (openclaw) ───────────────────────────────────────────────── */
 
+/* Blockquotes share the code-block surface: dark panel, same border/radius/
+   shadow — no left accent bar, no italics. */
 .sl-markdown-content blockquote {
-  border-inline-start: 3px solid var(--sl-color-hairline-light);
-  padding-inline-start: 1.5rem;
+  background: var(--oc-code-block);
+  border: 1px solid var(--oc-code-border);
+  border-radius: 9px;
+  box-shadow: var(--oc-code-shadow);
+  padding: 0.875rem 1.1rem;
   color: var(--sl-color-gray-2);
-  font-style: italic;
+  font-style: normal;
 }
 .sl-markdown-content blockquote :first-child { margin-top: 0; }
 .sl-markdown-content blockquote :last-child { margin-bottom: 0; }
