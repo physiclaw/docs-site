@@ -9,6 +9,7 @@ import {
   syncDocs,
   LOCALE_BY_SUFFIX,
   injectComponentImports,
+  injectEditUrl,
 } from './sync-docs.mjs';
 
 // ── classify(): maps a source filename → { locale, outName } ──────────────────
@@ -82,6 +83,23 @@ test('injectComponentImports: still imports real usage next to a code example', 
   assert.match(out, /import \{ Steps \}/);
 });
 
+// ── injectEditUrl(): point the edit link at the real source ──────────────────
+
+test('injectEditUrl: adds editUrl as the last frontmatter field', () => {
+  const out = injectEditUrl(FM, 'https://example.com/edit/intro.mdx');
+  assert.equal(out, '---\ntitle: Test\neditUrl: "https://example.com/edit/intro.mdx"\n---\n');
+});
+
+test('injectEditUrl: no frontmatter → unchanged', () => {
+  const src = 'Just prose, no frontmatter.\n';
+  assert.equal(injectEditUrl(src, 'https://example.com/x.mdx'), src);
+});
+
+test('injectEditUrl: respects an author-set editUrl', () => {
+  const src = '---\ntitle: T\neditUrl: https://custom/page\n---\nbody\n';
+  assert.equal(injectEditUrl(src, 'https://example.com/x.mdx'), src);
+});
+
 // ── syncDocs(): splits a source tree into per-locale dirs ─────────────────────
 
 async function scratch() {
@@ -146,6 +164,23 @@ test('syncDocs: .mdx output has component imports injected', async () => {
 
   const written = await readFile(join(out, 'en', 'page.mdx'), 'utf8');
   assert.match(written, /import \{ Steps \} from '@astrojs\/starlight\/components';/);
+
+  await rm(root, { recursive: true, force: true });
+});
+
+test('syncDocs: injects editUrl from the real co-located source path', async () => {
+  const { root, src, out } = await scratch();
+  await mkdir(join(src, 'start'), { recursive: true });
+  await writeFile(join(src, 'start', 'intro.mdx'), '---\ntitle: I\n---\nEN\n');
+  await writeFile(join(src, 'start', 'intro.zh.mdx'), '---\ntitle: I\n---\nZH\n');
+
+  await syncDocs({ src, out, editBaseUrl: 'https://host/edit/main/docs/' });
+
+  const en = await readFile(join(out, 'en', 'start', 'intro.mdx'), 'utf8');
+  const zh = await readFile(join(out, 'zh', 'start', 'intro.mdx'), 'utf8');
+  // The en page maps to start/intro.mdx; the zh page keeps its .zh suffix.
+  assert.match(en, /editUrl: "https:\/\/host\/edit\/main\/docs\/start\/intro\.mdx"/);
+  assert.match(zh, /editUrl: "https:\/\/host\/edit\/main\/docs\/start\/intro\.zh\.mdx"/);
 
   await rm(root, { recursive: true, force: true });
 });

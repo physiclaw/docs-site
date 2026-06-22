@@ -26,6 +26,14 @@ export const LOCALE_BY_SUFFIX = { '': 'en', '.zh': 'zh' };
 
 const MARKDOWN = new Set(['.md', '.mdx']);
 
+// Base for the "Edit page" links. Docs are authored co-located in the PhysiClaw
+// repo (docs/intro.mdx + docs/intro.zh.mdx), so the edit link must point back to
+// that real source path. We inject it per-page as frontmatter `editUrl` (see
+// injectEditUrl) because Starlight would otherwise append the split content path
+// (src/content/docs/en/…), which doesn't exist in the source repo.
+export const EDIT_BASE_URL =
+  process.env.EDIT_BASE_URL || 'https://github.com/physiclaw/PhysiClaw/edit/main/docs/';
+
 // Starlight components an author may use without importing them — the sync step
 // injects the import so docs read like plain Markdown.
 export const STARLIGHT_COMPONENTS = [
@@ -66,6 +74,23 @@ export function injectComponentImports(content) {
 }
 
 /**
+ * Insert an `editUrl` into a markdown file's frontmatter so Starlight's "Edit
+ * page" link points at the real co-located source in the code repo
+ * (e.g. .../docs/start/intro.zh.mdx), not the per-locale split path under
+ * src/content/docs that Starlight derives by default. No-op when the file has
+ * no frontmatter or already declares `editUrl` (an author override wins).
+ * @param {string} content
+ * @param {string} editUrl
+ * @returns {string}
+ */
+export function injectEditUrl(content, editUrl) {
+  const m = content.match(/^(---\n[\s\S]*?\n)(---\n)/);
+  if (!m) return content; // no frontmatter — nothing to extend
+  if (/^editUrl:/m.test(m[1])) return content; // author set it explicitly
+  return m[1] + `editUrl: ${JSON.stringify(editUrl)}\n` + m[2] + content.slice(m[0].length);
+}
+
+/**
  * Map a source filename to its target locale and output filename.
  * @param {string} filename e.g. "intro.zh.mdx"
  * @returns {{ locale: string, outName: string }}
@@ -94,10 +119,13 @@ async function walk(dir) {
 
 /**
  * Split a source docs tree into per-locale directories.
- * @param {{ src: string, out: string }} opts
+ * @param {{ src: string, out: string, editBaseUrl?: string }} opts
+ *   `editBaseUrl`, when set, is prefixed to each doc's source path (relative to
+ *   `src`, '/'-separated, .zh suffix preserved) and injected as frontmatter
+ *   `editUrl` so the "Edit page" link targets the real co-located source.
  * @returns {Promise<Record<string, number>>} count of markdown docs per locale
  */
-export async function syncDocs({ src, out }) {
+export async function syncDocs({ src, out, editBaseUrl }) {
   await rm(out, { recursive: true, force: true });
 
   const locales = [...new Set(Object.values(LOCALE_BY_SUFFIX))];
@@ -125,12 +153,12 @@ export async function syncDocs({ src, out }) {
       const { locale, outName } = classify(name);
       const dest = join(out, locale, ...parts, outName);
       await ensureDir(dirname(dest));
-      if (ext === '.mdx') {
-        // Preprocess: inject component imports so authoring stays import-free.
-        await writeFile(dest, injectComponentImports(await readFile(file, 'utf8')));
-      } else {
-        await copyFile(file, dest);
-      }
+      // Preprocess: point the edit link at the real co-located source, then
+      // (for .mdx) inject component imports so authoring stays import-free.
+      let text = await readFile(file, 'utf8');
+      if (editBaseUrl) text = injectEditUrl(text, editBaseUrl + rel.split(sep).join('/'));
+      if (ext === '.mdx') text = injectComponentImports(text);
+      await writeFile(dest, text);
       counts[locale] += 1;
     } else {
       // Asset: shared across every locale so relative links resolve.
@@ -160,7 +188,7 @@ if (isMain) {
     process.exit(1);
   }
 
-  const counts = await syncDocs({ src, out });
+  const counts = await syncDocs({ src, out, editBaseUrl: EDIT_BASE_URL });
   const summary = Object.entries(counts)
     .map(([l, n]) => `${l}:${n}`)
     .join('  ');

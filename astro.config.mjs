@@ -102,9 +102,11 @@ export default defineConfig({
       social: [
         { icon: 'github', label: 'GitHub', href: 'https://github.com/physiclaw/PhysiClaw' },
       ],
-      editLink: {
-        baseUrl: 'https://github.com/physiclaw/PhysiClaw/edit/main/docs/',
-      },
+      // "Edit page" links are injected per-page as frontmatter `editUrl` by
+      // scripts/sync-docs.mjs (EDIT_BASE_URL), pointing at the real co-located
+      // source in the PhysiClaw repo (docs/<path>.mdx / .zh.mdx). Starlight's
+      // editLink.baseUrl is intentionally unset: it would append the split
+      // content path (src/content/docs/en/…), which doesn't exist upstream.
       // No web fonts — the theme uses the system monospace/sans stacks
       // (ui-monospace / ui-sans-serif) for a zero-font-load setup.
       // Sidebar sections and the page order within them come from the docs
