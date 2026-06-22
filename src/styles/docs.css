@@ -569,12 +569,18 @@ starlight-theme-toggle button {
   background: transparent;
   color: var(--sl-color-gray-2);
   cursor: pointer;
-  transition: background-color 0.16s ease, color 0.16s ease;
+  transition: background-color 0.16s ease, color 0.16s ease, transform 0.1s ease;
 }
 starlight-theme-toggle button:hover,
 starlight-theme-toggle button:focus-visible {
   color: var(--sl-color-white);
   background: color-mix(in srgb, var(--pc-paper) 68%, transparent);
+}
+/* Natural press: a brief scale-down on click, matching the language toggle. */
+@media (prefers-reduced-motion: no-preference) {
+  starlight-theme-toggle button:active {
+    transform: scale(0.94);
+  }
 }
 .theme-icon { width: 1.25rem; height: 1.25rem; }
 :root[data-theme='dark'] .theme-icon.sun { display: none; }

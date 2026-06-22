@@ -1,15 +1,21 @@
 ---
-// Overrides Starlight's LanguageSelect (a native <select>) with a custom
-// disclosure dropdown so the language list can actually be styled — a rounded
-// menu of locale links. Locale codes/labels come from the resolved config; the
-// target URL for each locale is the current path with its leading locale
-// segment swapped (matching Starlight's own localizedUrl behaviour for our
-// prefixed locales).
+// Overrides Starlight's LanguageSelect (a native <select>) with a single toggle
+// link. The site has two locales, so instead of a dropdown we show the *other*
+// language's label and link straight to it: on an English page the button reads
+// "中文", on a Chinese page it reads "English". The target URL is the current
+// path with its leading locale segment swapped (matching Starlight's own
+// localizedUrl behaviour for our prefixed locales).
 import config from 'virtual:starlight/user-config';
 
 const codes = Object.keys(config.locales ?? {});
 const segments = Astro.url.pathname.split('/');
 const currentCode = codes.includes(segments[1]) ? segments[1] : codes[0];
+
+// The locale to switch to: the next one in the list, cycling back to the first.
+// For our two-locale config this is simply "the other language".
+const currentIndex = Math.max(0, codes.indexOf(currentCode));
+const targetCode = codes[(currentIndex + 1) % codes.length];
+const target = config.locales?.[targetCode];
 
 /** Current path with its locale segment swapped to `code`. */
 function hrefFor(code) {
@@ -18,59 +24,30 @@ function hrefFor(code) {
   else segs.splice(1, 0, code);
   return segs.join('/');
 }
-
-const items = Object.entries(config.locales ?? {}).map(([code, locale]) => ({
-  code,
-  label: locale.label,
-  lang: locale.lang,
-  href: hrefFor(code),
-  isCurrent: code === currentCode,
-}));
-const current = items.find((i) => i.isCurrent) ?? items[0];
 ---
 
 {
-  config.isMultilingual && (
-    <starlight-language-select class="lang-select">
-      <details>
-        <summary aria-label={Astro.locals.t('languageSelect.accessibleLabel')}>
-          <svg class="globe" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"
-            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <circle cx="12" cy="12" r="10" />
-            <path d="M2 12h20M12 2a15.3 15.3 0 0 1 0 20M12 2a15.3 15.3 0 0 0 0 20" />
-          </svg>
-          <span class="current">{current.label}</span>
-          <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="m6 9 6 6 6-6" />
-          </svg>
-        </summary>
-        <ul class="menu" role="list">
-          {items.map((i) => (
-            <li>
-              <a
-                href={i.href}
-                hreflang={i.lang}
-                lang={i.lang}
-                aria-current={i.isCurrent ? 'true' : undefined}
-              >
-                {i.label}
-              </a>
-            </li>
-          ))}
-        </ul>
-      </details>
-    </starlight-language-select>
+  config.isMultilingual && target && (
+    <a
+      class="lang-toggle"
+      href={hrefFor(targetCode)}
+      hreflang={target.lang}
+      lang={target.lang}
+      aria-label={Astro.locals.t('languageSelect.accessibleLabel')}
+    >
+      <svg class="globe" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"
+        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="10" />
+        <path d="M2 12h20M12 2a15.3 15.3 0 0 1 0 20M12 2a15.3 15.3 0 0 0 0 20" />
+      </svg>
+      <span class="label">{target.label}</span>
+    </a>
   )
 }
 
 <style>
-  .lang-select details {
-    position: relative;
-  }
-
-  /* Trigger — globe + current language + chevron, matching the header chrome. */
-  .lang-select summary {
+  /* A single toggle link styled to match the header chrome. */
+  .lang-toggle {
     display: flex;
     align-items: center;
     gap: 0.4rem;
@@ -81,120 +58,27 @@ const current = items.find((i) => i.isCurrent) ?? items[0];
     font-family: var(--sl-font-display);
     font-size: 0.8125rem;
     line-height: 1;
+    text-decoration: none;
     cursor: pointer;
-    list-style: none;
     user-select: none;
     transition:
       background-color 0.16s ease,
-      color 0.16s ease;
+      color 0.16s ease,
+      transform 0.1s ease;
   }
-  .lang-select summary::-webkit-details-marker {
-    display: none;
-  }
-  .lang-select summary:hover,
-  .lang-select details[open] summary {
+  .lang-toggle:hover,
+  .lang-toggle:focus-visible {
     color: var(--sl-color-white);
     background: color-mix(in srgb, var(--pc-paper) 68%, transparent);
   }
-  .lang-select .globe {
+  /* Natural press: a brief scale-down on click. */
+  @media (prefers-reduced-motion: no-preference) {
+    .lang-toggle:active {
+      transform: scale(0.94);
+    }
+  }
+  .lang-toggle .globe {
     width: 1.05rem;
     height: 1.05rem;
   }
-  .lang-select .chevron {
-    width: 0.85rem;
-    height: 0.85rem;
-    color: var(--sl-color-gray-3);
-    transition: transform 0.18s ease;
-  }
-  .lang-select details[open] .chevron {
-    transform: rotate(180deg);
-  }
-
-  /* Menu — a rounded card floating just below the trigger. */
-  .lang-select .menu {
-    position: absolute;
-    inset-block-start: calc(100% + 0.4rem);
-    inset-inline-start: 0;
-    z-index: 50;
-    min-width: 9rem;
-    margin: 0;
-    padding: 0.3rem;
-    list-style: none;
-    background: var(--pc-paper-2);
-    border: 1px solid var(--sl-color-hairline-light);
-    border-radius: 11px;
-    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.28);
-  }
-  .lang-select .menu li {
-    margin: 0;
-  }
-  .lang-select .menu a {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0.46rem 0.7rem;
-    border-radius: 7px;
-    color: var(--sl-color-gray-2);
-    font-family: var(--sl-font-display);
-    font-size: 0.8125rem;
-    text-decoration: none;
-    transition:
-      background-color 0.16s ease,
-      color 0.16s ease;
-  }
-  .lang-select .menu a:hover {
-    background: color-mix(in srgb, var(--pc-paper) 80%, transparent);
-    color: var(--sl-color-white);
-  }
-  /* Active locale — brand wash + a trailing check. */
-  .lang-select .menu a[aria-current='true'] {
-    color: var(--sl-color-text-accent);
-    font-weight: 700;
-    background: var(--pc-soft);
-  }
-  .lang-select .menu a[aria-current='true']::after {
-    content: '';
-    width: 0.85rem;
-    height: 0.85rem;
-    background-color: currentColor;
-    -webkit-mask: var(--check) center / contain no-repeat;
-    mask: var(--check) center / contain no-repeat;
-    --check: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='%23000'%20stroke-width='3'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M20%206%209%2017l-5-5'/%3E%3C/svg%3E");
-  }
 </style>
-
-<script>
-  class StarlightLanguageSelect extends HTMLElement {
-    private controller?: AbortController;
-
-    connectedCallback() {
-      const details = this.querySelector('details');
-      if (!details) return;
-      // Bind via an AbortController tied to the element's lifetime so the
-      // document-level listener is removed on disconnect — important under view
-      // transitions, where a new element is created on each navigation.
-      this.controller = new AbortController();
-      const { signal } = this.controller;
-      // Close on outside click or Escape (a locale link closes it by navigating).
-      document.addEventListener(
-        'click',
-        (e) => {
-          if (!details.contains(e.target as Node)) details.open = false;
-        },
-        { signal }
-      );
-      details.addEventListener(
-        'keydown',
-        (e) => {
-          if ((e as KeyboardEvent).key === 'Escape') details.open = false;
-        },
-        { signal }
-      );
-    }
-
-    disconnectedCallback() {
-      this.controller?.abort();
-    }
-  }
-  customElements.define('starlight-language-select', StarlightLanguageSelect);
-</script>

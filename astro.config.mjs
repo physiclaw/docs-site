@@ -61,8 +61,8 @@ export default defineConfig({
   redirects: { '/': `/${DEFAULT_LOCALE}/` },
   integrations: [
     starlight({
-      title: 'PhysiClaw Doc',
-      tagline: 'The AI that physically uses your phone.',
+      title: { en: 'PhysiClaw Doc', 'zh-CN': 'PhysiClaw 文档' },
+      tagline: 'The agent that interacts with you in the real world.',
       logo: { src: './src/assets/crab.svg', alt: 'PhysiClaw' },
       favicon: '/favicon.svg',
       defaultLocale: DEFAULT_LOCALE,
