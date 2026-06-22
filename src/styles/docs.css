@@ -236,6 +236,33 @@ nav.sidebar .sidebar-content { padding-inline: 0.4rem; }
 /* Flush with the main area — no divider line. */
 .sidebar-pane.sidebar-pane { border-inline-end: none; }
 
+/* Scrollbar: a thin, overlay-style bar with a transparent track (so there are
+   no track edge lines) and a soft rounded thumb that only firms up on hover —
+   far less heavy than the browser default. */
+.sidebar-pane {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent; /* thumb track — hidden until hover */
+}
+.sidebar-pane:hover,
+.sidebar-pane:focus-within {
+  scrollbar-color: color-mix(in srgb, var(--sl-color-gray-4) 40%, transparent) transparent;
+}
+.sidebar-pane::-webkit-scrollbar {
+  width: 8px;
+}
+.sidebar-pane::-webkit-scrollbar-track {
+  background: transparent;
+  border: 0;
+}
+.sidebar-pane::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 9px;
+}
+.sidebar-pane:hover::-webkit-scrollbar-thumb,
+.sidebar-pane:focus-within::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--sl-color-gray-4) 40%, transparent);
+}
+
 /* ── Three-column layout: spacing, no column dividers ────────────── */
 
 /* Starlight pins the article's whole horizontal slack to the left (auto 0), so
