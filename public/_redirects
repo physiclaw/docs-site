@@ -1,0 +1,8 @@
+# Cloudflare Pages redirects. Copied verbatim into dist/ at build (public/ → site root).
+#
+# The root "/" must bounce to the default locale. Astro emits a dist/index.html
+# meta-refresh page for this, but that flashes a blank "Redirecting…" page before
+# it bounces. On Vercel, vercel.json's server-side 302 intercepts "/" first; this
+# file is the Cloudflare equivalent. Cloudflare Pages follows _redirects rules
+# before serving a static asset at the same path, so this wins over index.html.
+/    /en/    302
