@@ -14,6 +14,7 @@
 //   /downloads/physiclaw_manual.pdf         English manual PDF download
 //   /downloads/physiclaw装配手册.pdf         中文 manual PDF download
 //   /downloads/physiclaw_custom_parts.zip   the 9 custom STEP parts
+//   /downloads/physiclaw_assembly_3d.zip    assembled 3D model (camera frame)
 //
 // `sourcing-guide` (not `sourcing`) avoids colliding with the existing Starlight
 // `hardware/sourcing` map page's generated route.
@@ -38,7 +39,7 @@
 import { spawnSync } from 'node:child_process';
 import { createWriteStream } from 'node:fs';
 import {
-  readdir, readFile, writeFile, mkdir, copyFile, rm, stat, access,
+  readdir, readFile, writeFile, mkdir, copyFile, rm, access,
 } from 'node:fs/promises';
 import { Readable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
@@ -53,16 +54,20 @@ export const TAG_PREFIX = 'physiclaw-hardware-v';
 export const ASSET_MANUAL = 'physiclaw-assembly-manual.zip';
 export const ASSET_SOURCING = 'physiclaw-sourcing-guide.zip';
 export const ASSET_PARTS = 'physiclaw_custom_parts.zip';
+export const ASSET_ASSEMBLY_3D = 'physiclaw_camera_frame_assembled.zip';
 export const CUSTOM_PARTS_URL = '/downloads/physiclaw_custom_parts.zip';
 
 const dirName = (zipName) => zipName.replace(/\.zip$/, '');
 
-// Release assets and how each is handled: `extract: true` archives are unzipped
-// into the workspace and laid down; the parts zip is served as-is (download only).
+// Release assets and how each is handled:
+//  - `extract: true` archives are unzipped into the workspace and laid down;
+//  - `download` assets are copied verbatim into /downloads/ under that name
+//    (the release filename and the served filename may differ).
 const ASSETS = [
   { file: ASSET_MANUAL, extract: true },
   { file: ASSET_SOURCING, extract: true },
-  { file: ASSET_PARTS, extract: false },
+  { file: ASSET_PARTS, download: ASSET_PARTS },
+  { file: ASSET_ASSEMBLY_3D, download: 'physiclaw_assembly_3d.zip' },
 ];
 
 // ── Pure helpers (unit-tested) ──────────────────────────────────────────────
@@ -369,7 +374,9 @@ async function main() {
   for (const dir of OWNED) await rm(dir, { recursive: true, force: true });
   await layDownManual(join(workDir, dirName(ASSET_MANUAL)));
   await layDownSourcing(join(workDir, dirName(ASSET_SOURCING)));
-  await copyInto(join(cacheDir, ASSET_PARTS), join(PUBLIC, 'downloads', ASSET_PARTS));
+  for (const { file, download } of ASSETS) {
+    if (download) await copyInto(join(cacheDir, file), join(PUBLIC, 'downloads', download));
+  }
 
   await writeFile(MARKER, tag + '\n');
   console.log(`✓ fetch-release: served ${tag} → /{en,zh}/hardware/{manual,sourcing-guide}/ + /downloads/`);
