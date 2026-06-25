@@ -90,7 +90,7 @@ link to these from the PhysiClaw docs source):
 | `/en/hardware/sourcing-guide/` · `/zh/hardware/sourcing-guide/` | sourcing guide (HTML) |
 | `/downloads/physiclaw_manual.pdf` · `/downloads/physiclaw装配手册.pdf` | manual PDF download (original filenames) |
 | `/downloads/physiclaw_custom_parts.zip` | the 9 custom STEP parts                   |
-| `/downloads/physiclaw_assembly_3d.zip`  | assembled 3D model (from `physiclaw_camera_frame_assembled.zip`) |
+| `/downloads/physiclaw_assembly_3d.zip`  | assembled 3D model — repackaged from `physiclaw_camera_frame_assembled.zip` (inner `.step` renamed to match the zip stem) |
 
 > `sourcing-guide` (not `sourcing`) so it never collides with the existing Starlight
 > `hardware/sourcing` map page's generated route.

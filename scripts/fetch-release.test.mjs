@@ -1,11 +1,13 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { inflateRawSync } from 'node:zlib';
 import {
   parseHardwareVersion,
   compareVersions,
   pickLatestRelease,
   isAscii,
   rewriteCustomPartsLink,
+  buildZip,
   CUSTOM_PARTS_URL,
 } from './fetch-release.mjs';
 
@@ -71,4 +73,21 @@ test('rewriteCustomPartsLink works for a future tag and leaves other links alone
   const out = rewriteCustomPartsLink(html);
   assert.ok(out.includes(`href="${CUSTOM_PARTS_URL}"`));
   assert.ok(out.includes('https://item.taobao.com/item.htm?id=123'));
+});
+
+test('buildZip produces a valid single-entry archive that round-trips', () => {
+  const data = Buffer.from('solid model — '.repeat(500), 'utf8');
+  const zip = buildZip([{ name: 'physiclaw_assembly_3d.step', data }]);
+
+  // Local file header + End of central directory signatures.
+  assert.equal(zip.readUInt32LE(0), 0x04034b50);
+  assert.equal(zip.readUInt32LE(zip.length - 22), 0x06054b50);
+  assert.ok(zip.includes(Buffer.from('physiclaw_assembly_3d.step')));
+
+  // The stored deflate stream inflates back to the original bytes.
+  const nameLen = zip.readUInt16LE(26);
+  const compLen = zip.readUInt32LE(18);
+  const start = 30 + nameLen;
+  const restored = inflateRawSync(zip.subarray(start, start + compLen));
+  assert.deepEqual(restored, data);
 });

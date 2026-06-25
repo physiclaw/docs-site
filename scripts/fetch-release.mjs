@@ -14,7 +14,7 @@
 //   /downloads/physiclaw_manual.pdf         English manual PDF download
 //   /downloads/physiclaw装配手册.pdf         中文 manual PDF download
 //   /downloads/physiclaw_custom_parts.zip   the 9 custom STEP parts
-//   /downloads/physiclaw_assembly_3d.zip    assembled 3D model (camera frame)
+//   /downloads/physiclaw_assembly_3d.zip    assembled 3D model (.step), repackaged from the camera-frame asset
 //
 // `sourcing-guide` (not `sourcing`) avoids colliding with the existing Starlight
 // `hardware/sourcing` map page's generated route.
@@ -45,6 +45,7 @@ import { Readable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 import { basename, dirname, extname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { deflateRawSync, crc32 } from 'node:zlib';
 
 export const REPO = process.env.PHYSICLAW_REPO || 'physiclaw/PhysiClaw';
 export const TAG_PREFIX = 'physiclaw-hardware-v';
@@ -62,12 +63,14 @@ const dirName = (zipName) => zipName.replace(/\.zip$/, '');
 // Release assets and how each is handled:
 //  - `extract: true` archives are unzipped into the workspace and laid down;
 //  - `download` assets are copied verbatim into /downloads/ under that name
-//    (the release filename and the served filename may differ).
+//    (the release filename and the served filename may differ);
+//  - `repackage` single-file archives are re-zipped so the inner file's stem
+//    matches the served zip's stem.
 const ASSETS = [
   { file: ASSET_MANUAL, extract: true },
   { file: ASSET_SOURCING, extract: true },
   { file: ASSET_PARTS, download: ASSET_PARTS },
-  { file: ASSET_ASSEMBLY_3D, download: 'physiclaw_assembly_3d.zip' },
+  { file: ASSET_ASSEMBLY_3D, repackage: 'physiclaw_assembly_3d.zip' },
 ];
 
 // ── Pure helpers (unit-tested) ──────────────────────────────────────────────
@@ -144,6 +147,68 @@ export function rewriteCustomPartsLink(html, url = CUSTOM_PARTS_URL) {
     'g',
   );
   return html.replace(re, url);
+}
+
+/**
+ * Build a ZIP archive in memory (DEFLATE), no external `zip` CLI needed. Node's
+ * `zlib.crc32` (Node ≥ 20.15 / 22.2) supplies the per-entry checksum. Standard
+ * (non-ZIP64) format — fine for our small single-file archive.
+ * @param {Array<{ name: string, data: Buffer }>} entries
+ * @returns {Buffer}
+ */
+export function buildZip(entries) {
+  const parts = [];
+  const central = [];
+  let offset = 0;
+
+  for (const { name, data } of entries) {
+    const nameBuf = Buffer.from(name, 'utf8');
+    const compressed = deflateRawSync(data);
+    const crc = crc32(data) >>> 0;
+
+    const local = Buffer.alloc(30);
+    local.writeUInt32LE(0x04034b50, 0); // local file header signature
+    local.writeUInt16LE(20, 4); // version needed
+    local.writeUInt16LE(0, 6); // flags
+    local.writeUInt16LE(8, 8); // method: deflate
+    local.writeUInt32LE(0, 10); // mod time + date
+    local.writeUInt32LE(crc, 14);
+    local.writeUInt32LE(compressed.length, 18);
+    local.writeUInt32LE(data.length, 22);
+    local.writeUInt16LE(nameBuf.length, 26);
+    local.writeUInt16LE(0, 28); // extra length
+    parts.push(local, nameBuf, compressed);
+
+    const cd = Buffer.alloc(46);
+    cd.writeUInt32LE(0x02014b50, 0); // central directory header signature
+    cd.writeUInt16LE(20, 4); // version made by
+    cd.writeUInt16LE(20, 6); // version needed
+    cd.writeUInt16LE(0, 8); // flags
+    cd.writeUInt16LE(8, 10); // method: deflate
+    cd.writeUInt32LE(0, 12); // mod time + date
+    cd.writeUInt32LE(crc, 16);
+    cd.writeUInt32LE(compressed.length, 20);
+    cd.writeUInt32LE(data.length, 24);
+    cd.writeUInt16LE(nameBuf.length, 28);
+    cd.writeUInt16LE(0, 30); // extra length
+    cd.writeUInt16LE(0, 32); // comment length
+    cd.writeUInt16LE(0, 34); // disk number start
+    cd.writeUInt16LE(0, 36); // internal attrs
+    cd.writeUInt32LE(0, 38); // external attrs
+    cd.writeUInt32LE(offset, 42); // local header offset
+    central.push(cd, nameBuf);
+
+    offset += local.length + nameBuf.length + compressed.length;
+  }
+
+  const centralBuf = Buffer.concat(central);
+  const eocd = Buffer.alloc(22);
+  eocd.writeUInt32LE(0x06054b50, 0); // end of central directory signature
+  eocd.writeUInt16LE(entries.length, 8); // entries on this disk
+  eocd.writeUInt16LE(entries.length, 10); // total entries
+  eocd.writeUInt32LE(centralBuf.length, 12); // central dir size
+  eocd.writeUInt32LE(offset, 16); // central dir offset
+  return Buffer.concat([...parts, centralBuf, eocd]);
 }
 
 // ── IO ──────────────────────────────────────────────────────────────────────
@@ -233,6 +298,27 @@ async function walk(dir) {
     else if (entry.isFile()) out.push(full);
   }
   return out;
+}
+
+/**
+ * Re-zip a single-file archive so the inner file's stem matches the output zip's
+ * stem (keeping the inner file's extension): e.g. camera_40_frame_assembled.step
+ * inside physiclaw_camera_frame_assembled.zip becomes physiclaw_assembly_3d.step
+ * inside physiclaw_assembly_3d.zip. Throws if the source isn't a single file.
+ */
+async function repackageZip(srcZip, destZip, workDir) {
+  const stem = basename(destZip, '.zip');
+  const tmp = join(workDir, stem);
+  await rm(tmp, { recursive: true, force: true });
+  unzip(srcZip, tmp);
+
+  const inner = await walk(tmp);
+  if (inner.length !== 1) {
+    throw new Error(`repackage: expected one file in ${basename(srcZip)}, found ${inner.length}`);
+  }
+  const data = await readFile(inner[0]);
+  await mkdir(dirname(destZip), { recursive: true });
+  await writeFile(destZip, buildZip([{ name: stem + extname(inner[0]), data }]));
 }
 
 /**
@@ -374,8 +460,9 @@ async function main() {
   for (const dir of OWNED) await rm(dir, { recursive: true, force: true });
   await layDownManual(join(workDir, dirName(ASSET_MANUAL)));
   await layDownSourcing(join(workDir, dirName(ASSET_SOURCING)));
-  for (const { file, download } of ASSETS) {
+  for (const { file, download, repackage } of ASSETS) {
     if (download) await copyInto(join(cacheDir, file), join(PUBLIC, 'downloads', download));
+    if (repackage) await repackageZip(join(cacheDir, file), join(PUBLIC, 'downloads', repackage), workDir);
   }
 
   await writeFile(MARKER, tag + '\n');
