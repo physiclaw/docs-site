@@ -72,6 +72,42 @@ section lists its pages **in order**, by slug:
 missing default-locale source, etc.) and warns about pages not listed in any section. Reordering or
 adding a page is a one-line edit in `docs.json` — no renderer change.
 
+## Hardware release artifacts (build manual, sourcing guide, STEP parts)
+
+The build manual, sourcing guide, and 3D-printed STEP parts are **not in this repo** — they're
+published as assets on the [`physiclaw/PhysiClaw` GitHub releases](https://github.com/physiclaw/PhysiClaw/releases),
+tagged `physiclaw-hardware-v<semver>`. `scripts/fetch-release.mjs` runs at build time, fetches the
+**latest** hardware release, and lays its artifacts into `public/` so they deploy as plain static
+files. The sourcing guide's hardcoded custom-parts download link is rewritten to the site-relative
+path we serve.
+
+Stable URLs (same locale-prefixed `/<locale>/hardware/<slug>/` pattern as the rest of the site —
+link to these from the PhysiClaw docs source):
+
+| URL                                     | Artifact                                  |
+| --------------------------------------- | ----------------------------------------- |
+| `/en/hardware/manual/` · `/zh/hardware/manual/` | build manual (HTML, with `assets/` SVGs)  |
+| `/en/hardware/sourcing-guide/` · `/zh/hardware/sourcing-guide/` | sourcing guide (HTML) |
+| `/downloads/physiclaw_manual.pdf` · `/downloads/physiclaw装配手册.pdf` | manual PDF download (original filenames) |
+| `/downloads/physiclaw_custom_parts.zip` | the 9 custom STEP parts                   |
+
+> `sourcing-guide` (not `sourcing`) so it never collides with the existing Starlight
+> `hardware/sourcing` map page's generated route.
+
+Release selection is robust and overridable via env:
+
+| Env var                       | Effect                                                          |
+| ----------------------------- | -------------------------------------------------------------- |
+| `PHYSICLAW_RELEASE_TAG`       | pin an exact tag (e.g. `physiclaw-hardware-v0.2`)              |
+| `GITHUB_TOKEN` / `GH_TOKEN`   | authenticate the API (higher rate limit on shared CI IPs)      |
+| `FETCH_RELEASE_FORCE=1`       | ignore the cache and re-download                               |
+| `SKIP_FETCH_RELEASE=1`        | skip the fetch (content-only iteration)                        |
+
+Downloads are cached under `.release-cache/<tag>/` (gitignored) and the served output is skipped
+when already up to date, so repeat dev runs are instant. If the API is unreachable but a cached copy
+is already in `public/`, the build falls back to it instead of failing. Requires `unzip` on `PATH`
+(present in standard CI build images).
+
 ## Local development
 
 Requires **Node ≥ 22.12.0** and **pnpm**.
@@ -94,9 +130,10 @@ Re-run `pnpm sync:docs` after editing anything in the docs source.
 | ---------------- | ----------------------------------------------------- |
 | `pnpm dev`       | Sync + serve at `localhost:4321`                      |
 | `pnpm sync:docs` | Split the docs source → `src/content/docs/{en,zh}`    |
-| `pnpm build`     | Sync + build the static site to `./dist/`             |
+| `pnpm fetch:release` | Fetch the latest hardware release → `public/`     |
+| `pnpm build`     | Fetch release + sync + build the static site to `./dist/` |
 | `pnpm preview`   | Preview the production build                          |
-| `pnpm test`      | Run the `sync-docs` + `docs-config` unit tests        |
+| `pnpm test`      | Run the `sync-docs` + `docs-config` + `fetch-release` unit tests |
 
 ## Project structure
 
@@ -112,7 +149,9 @@ src/
 scripts/
 ├── sync-docs.mjs         # split docs source → src/content/docs/{en,zh} + inject imports
 ├── docs-config.mjs       # resolve docs source + validate docs.json → sidebar
+├── fetch-release.mjs     # fetch latest PhysiClaw hardware release → public/{en,zh}/hardware/ + downloads/
 └── *.test.mjs            # unit tests (node:test)
+public/                   # static assets; {en,zh}/hardware/{manual,sourcing-guide}/ + downloads/ fetched at build (gitignored)
 deploy/                   # GitHub Action template + deploy guide for the PhysiClaw repo
 astro.config.mjs          # Starlight: locales, redirect, sidebar (from docs.json), brand
 vercel.json               # buildCommand: pnpm build (so the sync prebuild runs)

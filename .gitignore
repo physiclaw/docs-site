@@ -10,3 +10,13 @@ dist
 physiclaw-docs
 # Generated Starlight content, split by locale (en/ + zh/) by scripts/sync-docs.mjs
 src/content/docs
+
+# Release artifacts fetched from physiclaw/PhysiClaw at build by scripts/fetch-release.mjs.
+# Served from public/ but never committed — pulled fresh each build.
+.release-cache
+public/en/hardware/manual
+public/zh/hardware/manual
+public/en/hardware/sourcing-guide
+public/zh/hardware/sourcing-guide
+public/downloads
+public/.release-version
