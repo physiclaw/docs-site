@@ -189,14 +189,19 @@ const photos = thumbs.map((thumb, i) => ({
     color: var(--sl-color-gray-2);
   }
 
-  /* Row-major grid: as many ≥240px columns as fit, flowing left-to-right then down
-     (1, 2, 3 / 4, 5, 6). align-items:start lets photos keep their natural height. */
+  /* Row-major grid, flowing left-to-right then down (1, 2, 3 / 4, 5, 6): 3 columns
+     on desktop, 1 on phones. align-items:start lets photos keep their natural height. */
   .gallery-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr));
+    grid-template-columns: repeat(3, 1fr);
     gap: 1rem;
     align-items: start;
     margin-top: 1.5rem;
+  }
+  @media (max-width: 600px) {
+    .gallery-grid {
+      grid-template-columns: 1fr;
+    }
   }
   .gallery-item {
     display: block;
