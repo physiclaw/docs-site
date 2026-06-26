@@ -4,12 +4,13 @@
 // Photos are pre-optimized ONCE and committed under src/assets/gallery/{thumb,full}/ by
 // scripts/optimize-gallery.mjs — the build does no image processing and no download, it
 // just serves them. A small webp thumbnail per photo plus a larger webp for the lightbox,
-// so big originals never block the grid. The masonry layout keeps each photo's natural
+// so big originals never block the grid. The row-major grid keeps each photo's natural
 // aspect ratio (no cropping). The lightbox is a
 // small progressive enhancement (script below): it adds ONE history entry for the
-// whole viewing session — prev/next swap in place, Back/Esc/× close it — so browsing
-// photos never traps the browser's Back button. Without JS, thumbnails just link to
-// the full image.
+// whole viewing session — prev/next (buttons, arrow keys, or swipe) swap in place,
+// and Back / Esc / tapping outside close it (the × button is hidden on phones) — so
+// browsing photos never traps the browser's Back button. Without JS, thumbnails just
+// link to the full image.
 import type { ImageMetadata } from 'astro';
 
 interface Props {
@@ -69,7 +70,7 @@ const photos = thumbs.map((thumb, i) => ({
 
       {/* Thumbnails link to the full image (no-JS fallback); the script below
           intercepts the click and opens the in-page lightbox instead. */}
-      <div class="gallery-masonry" data-gallery>
+      <div class="gallery-grid" data-gallery>
         {photos.map((p) => (
           <a class="gallery-item" href={p.fullSrc} aria-label={STRINGS.enlarge(p.n)}>
             <img
@@ -154,6 +155,29 @@ const photos = thumbs.map((thumb, i) => ({
             else if (e.key === 'ArrowRight') show(index + 1);
             else if (e.key === 'ArrowLeft') show(index - 1);
           });
+
+          // Touch: swipe left → next, swipe right → prev (mostly-horizontal only).
+          let startX = 0;
+          let startY = 0;
+          box.addEventListener(
+            'touchstart',
+            (e) => {
+              startX = e.changedTouches[0].clientX;
+              startY = e.changedTouches[0].clientY;
+            },
+            { passive: true },
+          );
+          box.addEventListener(
+            'touchend',
+            (e) => {
+              const dx = e.changedTouches[0].clientX - startX;
+              const dy = e.changedTouches[0].clientY - startY;
+              if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy)) {
+                show(dx < 0 ? index + 1 : index - 1);
+              }
+            },
+            { passive: true },
+          );
         }
       </script>
     </Fragment>
@@ -165,16 +189,17 @@ const photos = thumbs.map((thumb, i) => ({
     color: var(--sl-color-gray-2);
   }
 
-  /* Masonry: as many ≥260px columns as fit. Photos keep their natural ratio. */
-  .gallery-masonry {
-    columns: 260px 3;
-    column-gap: 1rem;
+  /* Row-major grid: as many ≥240px columns as fit, flowing left-to-right then down
+     (1, 2, 3 / 4, 5, 6). align-items:start lets photos keep their natural height. */
+  .gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr));
+    gap: 1rem;
+    align-items: start;
     margin-top: 1.5rem;
   }
   .gallery-item {
     display: block;
-    margin: 0 0 1rem;
-    break-inside: avoid;
     overflow: hidden;
     border-radius: 9px;
     border: 1px solid var(--pc-code-border, var(--sl-color-gray-5));
@@ -272,6 +297,13 @@ const photos = thumbs.map((thumb, i) => ({
     height: 2.5rem;
     border-radius: 9px;
     font-size: 1.5rem;
+  }
+  /* On phones the close button sits under the browser's top chrome; hide it there
+     (tapping the backdrop or the Back button still closes the lightbox). */
+  @media (max-width: 600px) {
+    .lb-close {
+      display: none;
+    }
   }
   .lb-counter {
     position: absolute;

@@ -106,9 +106,10 @@ no full-res download**, it just serves the pre-baked webp.
 
 The en/zh pages (`src/pages/{en,zh}/hardware-gallery.astro`) render the shared
 `src/components/HardwareGallery.astro` inside `<StarlightPage>` (site theme, no sidebar): the baked
-thumbnails in a natural-aspect masonry grid, and a small JS lightbox with prev/next that adds a single
-browser-history entry (Back closes it rather than stepping through photos; no-JS falls back to linking
-the full image). A gallery fetch failure is non-fatal (the page just shows no photos).
+thumbnails in a natural-aspect, row-major grid, and a small JS lightbox — prev/next via buttons, arrow
+keys, or swipe — that adds a single browser-history entry (Back closes it rather than stepping through
+photos; no-JS falls back to linking the full image). A gallery fetch failure is non-fatal (the page
+just shows no photos).
 
 Release selection is robust and overridable via env:
 
