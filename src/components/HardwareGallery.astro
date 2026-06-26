@@ -4,8 +4,11 @@
 // Photos are fetched into src/assets/gallery/ at build time by scripts/fetch-release.mjs
 // and optimized here with astro:assets (sharp): a small webp thumbnail per photo plus a
 // larger webp for the lightbox, so big originals never block the grid. The masonry
-// layout keeps each photo's natural aspect ratio (no cropping). The lightbox is pure
-// CSS (:target) — no client JS — with prev/next, a close affordance, and a counter.
+// layout keeps each photo's natural aspect ratio (no cropping). The lightbox is a
+// small progressive enhancement (script below): it adds ONE history entry for the
+// whole viewing session — prev/next swap in place, Back/Esc/× close it — so browsing
+// photos never traps the browser's Back button. Without JS, thumbnails just link to
+// the full image.
 import { getImage } from 'astro:assets';
 import type { ImageMetadata } from 'astro';
 
@@ -60,8 +63,6 @@ const photos = await Promise.all(
       thumbW,
       thumbH: Math.round((thumbW * src.height) / src.width),
       fullSrc: full.src,
-      prev: i === 0 ? sources.length : i, // 1-based id of previous (cyclic)
-      next: i === sources.length - 1 ? 1 : i + 2,
     };
   }),
 );
@@ -74,9 +75,11 @@ const photos = await Promise.all(
     <Fragment>
       <p class="gallery-intro">{STRINGS.intro}</p>
 
-      <div class="gallery-masonry">
+      {/* Thumbnails link to the full image (no-JS fallback); the script below
+          intercepts the click and opens the in-page lightbox instead. */}
+      <div class="gallery-masonry" data-gallery>
         {photos.map((p) => (
-          <a class="gallery-item" href={`#photo-${p.n}`} aria-label={STRINGS.enlarge(p.n)}>
+          <a class="gallery-item" href={p.fullSrc} aria-label={STRINGS.enlarge(p.n)}>
             <img
               src={p.thumbSrc}
               width={p.thumbW}
@@ -89,24 +92,78 @@ const photos = await Promise.all(
         ))}
       </div>
 
-      {photos.map((p) => (
-        <div class="gallery-lightbox" id={`photo-${p.n}`}>
-          <a class="lb-backdrop" href="#_" aria-label={STRINGS.close} />
-          <a class="lb-nav lb-prev" href={`#photo-${p.prev}`} aria-label={STRINGS.prev}>
-            ‹
-          </a>
-          <img class="lb-img" src={p.fullSrc} alt={STRINGS.alt(p.n)} loading="lazy" decoding="async" />
-          <a class="lb-nav lb-next" href={`#photo-${p.next}`} aria-label={STRINGS.next}>
-            ›
-          </a>
-          <a class="lb-close" href="#_" aria-label={STRINGS.close}>
-            ×
-          </a>
-          <span class="lb-counter">
-            {p.n} / {photos.length}
-          </span>
-        </div>
-      ))}
+      {/* Single reusable lightbox, driven by the script (no URL hash, so browsing
+          photos never pollutes browser history). */}
+      <div class="gallery-lightbox" data-lightbox role="dialog" aria-modal="true" aria-label="Photo viewer">
+        <button type="button" class="lb-backdrop" data-lb-close aria-label={STRINGS.close} />
+        <button type="button" class="lb-nav lb-prev" data-lb-prev aria-label={STRINGS.prev}>‹</button>
+        <img class="lb-img" data-lb-img alt="" />
+        <button type="button" class="lb-nav lb-next" data-lb-next aria-label={STRINGS.next}>›</button>
+        <button type="button" class="lb-close" data-lb-close aria-label={STRINGS.close}>×</button>
+        <span class="lb-counter" data-lb-counter />
+      </div>
+
+      <script>
+        const grid = document.querySelector<HTMLElement>('[data-gallery]');
+        const box = document.querySelector<HTMLElement>('[data-lightbox]');
+        if (grid && box) {
+          const view = box.querySelector<HTMLImageElement>('[data-lb-img]')!;
+          const counter = box.querySelector<HTMLElement>('[data-lb-counter]')!;
+          const links = [...grid.querySelectorAll<HTMLAnchorElement>('.gallery-item')];
+          const items = links.map((a) => ({ src: a.href, alt: a.querySelector('img')?.alt ?? '' }));
+
+          let index = 0;
+          let open = false;
+          let opener: HTMLElement | null = null;
+
+          const render = () => {
+            view.src = items[index].src;
+            view.alt = items[index].alt;
+            counter.textContent = `${index + 1} / ${items.length}`;
+          };
+          const show = (i: number) => {
+            index = (i + items.length) % items.length;
+            render();
+          };
+          const openAt = (i: number) => {
+            show(i);
+            box.classList.add('is-open');
+            document.body.style.overflow = 'hidden';
+            box.querySelector<HTMLButtonElement>('[data-lb-next]')?.focus();
+            if (!open) {
+              open = true;
+              // One history entry for the whole viewing session: Back closes it.
+              history.pushState({ galleryLightbox: true }, '');
+            }
+          };
+          const close = () => {
+            box.classList.remove('is-open');
+            document.body.style.overflow = '';
+            open = false;
+            opener?.focus();
+          };
+          // Close via UI → pop our pushed entry (which triggers the popstate close).
+          const dismiss = () => (open ? history.back() : close());
+
+          grid.addEventListener('click', (e) => {
+            const a = (e.target as HTMLElement).closest<HTMLAnchorElement>('.gallery-item');
+            if (!a) return;
+            e.preventDefault();
+            opener = a;
+            openAt(links.indexOf(a));
+          });
+          box.querySelector('[data-lb-prev]')!.addEventListener('click', () => show(index - 1));
+          box.querySelector('[data-lb-next]')!.addEventListener('click', () => show(index + 1));
+          box.querySelectorAll('[data-lb-close]').forEach((el) => el.addEventListener('click', dismiss));
+          window.addEventListener('popstate', () => open && close());
+          document.addEventListener('keydown', (e) => {
+            if (!open) return;
+            if (e.key === 'Escape') dismiss();
+            else if (e.key === 'ArrowRight') show(index + 1);
+            else if (e.key === 'ArrowLeft') show(index - 1);
+          });
+        }
+      </script>
     </Fragment>
   )
 }
@@ -145,7 +202,7 @@ const photos = await Promise.all(
     }
   }
 
-  /* Pure-CSS lightbox — visible only when its id is the URL :target. */
+  /* Lightbox — shown when the script adds .is-open (driven by JS, not the URL). */
   .gallery-lightbox {
     position: fixed;
     inset: 0;
@@ -154,12 +211,21 @@ const photos = await Promise.all(
     align-items: center;
     justify-content: center;
   }
-  .gallery-lightbox:target {
+  .gallery-lightbox.is-open {
     display: flex;
+  }
+  /* The controls are <button>s — strip the native chrome. */
+  .lb-backdrop,
+  .lb-nav,
+  .lb-close {
+    appearance: none;
+    font: inherit;
+    cursor: pointer;
   }
   .lb-backdrop {
     position: absolute;
     inset: 0;
+    border: 0;
     background: color-mix(in srgb, var(--sl-color-black) 90%, transparent);
     cursor: zoom-out;
   }

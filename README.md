@@ -101,8 +101,9 @@ that's updated in place, so `fetchGallery()` fetches it independently — keyed 
 time rather than a version tag — and lays the images under `src/assets/gallery/` (so Astro's image
 pipeline optimizes them). The en/zh pages (`src/pages/{en,zh}/hardware-gallery.astro`) render the
 shared `src/components/HardwareGallery.astro` inside `<StarlightPage>` (site theme, no sidebar):
-optimized webp thumbnails + a larger lightbox image (lazy-loaded), a natural-aspect masonry grid,
-and a pure-CSS lightbox with prev/next. A gallery fetch failure is non-fatal (the page just shows no
+optimized webp thumbnails + a natural-aspect masonry grid, and a small JS lightbox with prev/next
+that adds a single browser-history entry (Back closes it rather than stepping through photos; no-JS
+falls back to linking the full image). A gallery fetch failure is non-fatal (the page just shows no
 photos).
 
 Release selection is robust and overridable via env:
