@@ -20,5 +20,7 @@ public/en/hardware/sourcing-guide
 public/zh/hardware/sourcing-guide
 public/downloads
 public/.release-version
-# Build photos fetched into src/assets/ (Astro optimizes them); never committed.
+# Build photos: fetched (pre-optimized) from the gallery release at build, never committed.
 src/assets/gallery
+# The optimized zip produced locally by scripts/optimize-gallery.mjs for upload to the release.
+/physiclaw_hardware_gallery.zip

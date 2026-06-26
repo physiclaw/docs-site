@@ -96,15 +96,19 @@ link to these from the PhysiClaw docs source):
 > `sourcing-guide` (not `sourcing`) so it never collides with the existing Starlight
 > `hardware/sourcing` map page's generated route.
 
-The **build-photo gallery** comes from a separate, fixed-tag release (`physiclaw-hardware-gallery`)
-that's updated in place, so `fetchGallery()` fetches it independently — keyed on the asset's upload
-time rather than a version tag — and lays the images under `src/assets/gallery/` (so Astro's image
-pipeline optimizes them). The en/zh pages (`src/pages/{en,zh}/hardware-gallery.astro`) render the
-shared `src/components/HardwareGallery.astro` inside `<StarlightPage>` (site theme, no sidebar):
-optimized webp thumbnails + a natural-aspect masonry grid, and a small JS lightbox with prev/next
-that adds a single browser-history entry (Back closes it rather than stepping through photos; no-JS
-falls back to linking the full image). A gallery fetch failure is non-fatal (the page just shows no
-photos).
+The **build-photo gallery** comes from a separate, fixed-tag release (`physiclaw-hardware-gallery`).
+The photos are **optimized once, not on every build**: run `pnpm optimize:gallery` locally (reads the
+full-res originals — default `~/Downloads/physiclaw_images/images`), which writes webp `thumb/` +
+`full/` pairs into `src/assets/gallery/` and packs them into `physiclaw_hardware_gallery.zip`. Upload
+that (~20 MB) zip to the release, replacing the asset. At build, `fetchGallery()` downloads and unzips
+it into `src/assets/gallery/` (keyed on the asset's upload time) — so CI does **no image processing and
+no full-res download**, it just serves the pre-baked webp.
+
+The en/zh pages (`src/pages/{en,zh}/hardware-gallery.astro`) render the shared
+`src/components/HardwareGallery.astro` inside `<StarlightPage>` (site theme, no sidebar): the baked
+thumbnails in a natural-aspect masonry grid, and a small JS lightbox with prev/next that adds a single
+browser-history entry (Back closes it rather than stepping through photos; no-JS falls back to linking
+the full image). A gallery fetch failure is non-fatal (the page just shows no photos).
 
 Release selection is robust and overridable via env:
 

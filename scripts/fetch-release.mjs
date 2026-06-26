@@ -15,7 +15,7 @@
 //   /downloads/physiclaw装配手册.pdf         中文 manual PDF download
 //   /downloads/physiclaw_custom_parts.zip   the 9 custom STEP parts
 //   /downloads/physiclaw_assembly_3d.zip    assembled 3D model (.step), repackaged from the camera-frame asset
-//   src/assets/gallery/<name>                build photos (optimized by astro:assets), shown at /{en,zh}/hardware-gallery
+//   src/assets/gallery/{thumb,full}/         pre-optimized build photos, shown at /{en,zh}/hardware-gallery
 //
 // `sourcing-guide` (not `sourcing`) avoids colliding with the existing Starlight
 // `hardware/sourcing` map page's generated route.
@@ -46,7 +46,7 @@ import { Readable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 import { basename, dirname, extname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { deflateRawSync, crc32 } from 'node:zlib';
+import { buildZip } from './zip.mjs';
 
 export const REPO = process.env.PHYSICLAW_REPO || 'physiclaw/PhysiClaw';
 export const TAG_PREFIX = 'physiclaw-hardware-v';
@@ -148,68 +148,6 @@ export function rewriteCustomPartsLink(html, url = CUSTOM_PARTS_URL) {
     'g',
   );
   return html.replace(re, url);
-}
-
-/**
- * Build a ZIP archive in memory (DEFLATE), no external `zip` CLI needed. Node's
- * `zlib.crc32` (Node ≥ 20.15 / 22.2) supplies the per-entry checksum. Standard
- * (non-ZIP64) format — fine for our small single-file archive.
- * @param {Array<{ name: string, data: Buffer }>} entries
- * @returns {Buffer}
- */
-export function buildZip(entries) {
-  const parts = [];
-  const central = [];
-  let offset = 0;
-
-  for (const { name, data } of entries) {
-    const nameBuf = Buffer.from(name, 'utf8');
-    const compressed = deflateRawSync(data);
-    const crc = crc32(data) >>> 0;
-
-    const local = Buffer.alloc(30);
-    local.writeUInt32LE(0x04034b50, 0); // local file header signature
-    local.writeUInt16LE(20, 4); // version needed
-    local.writeUInt16LE(0, 6); // flags
-    local.writeUInt16LE(8, 8); // method: deflate
-    local.writeUInt32LE(0, 10); // mod time + date
-    local.writeUInt32LE(crc, 14);
-    local.writeUInt32LE(compressed.length, 18);
-    local.writeUInt32LE(data.length, 22);
-    local.writeUInt16LE(nameBuf.length, 26);
-    local.writeUInt16LE(0, 28); // extra length
-    parts.push(local, nameBuf, compressed);
-
-    const cd = Buffer.alloc(46);
-    cd.writeUInt32LE(0x02014b50, 0); // central directory header signature
-    cd.writeUInt16LE(20, 4); // version made by
-    cd.writeUInt16LE(20, 6); // version needed
-    cd.writeUInt16LE(0, 8); // flags
-    cd.writeUInt16LE(8, 10); // method: deflate
-    cd.writeUInt32LE(0, 12); // mod time + date
-    cd.writeUInt32LE(crc, 16);
-    cd.writeUInt32LE(compressed.length, 20);
-    cd.writeUInt32LE(data.length, 24);
-    cd.writeUInt16LE(nameBuf.length, 28);
-    cd.writeUInt16LE(0, 30); // extra length
-    cd.writeUInt16LE(0, 32); // comment length
-    cd.writeUInt16LE(0, 34); // disk number start
-    cd.writeUInt16LE(0, 36); // internal attrs
-    cd.writeUInt32LE(0, 38); // external attrs
-    cd.writeUInt32LE(offset, 42); // local header offset
-    central.push(cd, nameBuf);
-
-    offset += local.length + nameBuf.length + compressed.length;
-  }
-
-  const centralBuf = Buffer.concat(central);
-  const eocd = Buffer.alloc(22);
-  eocd.writeUInt32LE(0x06054b50, 0); // end of central directory signature
-  eocd.writeUInt16LE(entries.length, 8); // entries on this disk
-  eocd.writeUInt16LE(entries.length, 10); // total entries
-  eocd.writeUInt32LE(centralBuf.length, 12); // central dir size
-  eocd.writeUInt32LE(offset, 16); // central dir offset
-  return Buffer.concat([...parts, centralBuf, eocd]);
 }
 
 // ── IO ──────────────────────────────────────────────────────────────────────
@@ -367,11 +305,10 @@ const OWNED = [
   join(PUBLIC, 'downloads'),
 ];
 
-// The build-photo gallery is a SEPARATE, fixed-tag release (physiclaw-hardware-gallery)
-// that's updated in place — so it's fetched independently of the versioned hardware
-// release, keyed on the asset's upload time. Images land in src/assets/gallery/ (NOT
-// public/) so Astro's image pipeline optimizes them; the /hardware-gallery pages
-// (src/pages/{en,zh}/hardware-gallery.astro) import them via astro:assets.
+// The build-photo gallery is a SEPARATE, fixed-tag release (physiclaw-hardware-gallery),
+// updated in place. Its zip holds images ALREADY optimized once by scripts/optimize-gallery.mjs
+// (thumb/ + full/ webp), so the build just downloads (~small) and unzips into src/assets/gallery/
+// — NO image processing. Cache is keyed on the asset's upload time.
 const GALLERY_TAG = 'physiclaw-hardware-gallery';
 const ASSET_GALLERY = 'physiclaw_hardware_gallery.zip';
 const GALLERY_DIR = join(ROOT, 'src', 'assets', 'gallery');
@@ -410,10 +347,11 @@ async function layDownSourcing(extractDir) {
 }
 
 /**
- * Fetch the build-photo gallery (its own fixed-tag release) and lay the images
- * out under public/gallery/. The tag never changes but its images get replaced
- * in place, so the cache is keyed on the asset's upload time. On the offline
- * path this throws before touching public/, so previously served images survive.
+ * Fetch the pre-optimized build-photo gallery (its own fixed-tag release) and unzip
+ * it into src/assets/gallery/ (preserving its thumb/ + full/ layout). The tag is
+ * stable but its zip is replaced in place, so the cache is keyed on the asset's
+ * upload time. Throws before touching the output dir on the offline path, so a
+ * previously fetched gallery survives.
  */
 async function fetchGallery(force) {
   const release = await getReleaseByTag(GALLERY_TAG);
@@ -435,16 +373,14 @@ async function fetchGallery(force) {
     console.log(`  ↓ ${ASSET_GALLERY}`);
     await download(asset.browser_download_url, zip);
   }
-  const work = join(cacheDir, 'extract');
-  await rm(work, { recursive: true, force: true });
-  unzip(zip, work);
-
-  const images = (await walk(work)).filter((f) => IMAGE_RE.test(f)).sort();
-  if (images.length === 0) throw new Error(`no images found in ${ASSET_GALLERY}`);
   await rm(GALLERY_DIR, { recursive: true, force: true });
-  for (const img of images) await copyInto(img, join(GALLERY_DIR, basename(img)));
+  await mkdir(GALLERY_DIR, { recursive: true });
+  unzip(zip, GALLERY_DIR);
+
+  const count = (await walk(GALLERY_DIR)).filter((f) => IMAGE_RE.test(f)).length;
+  if (count === 0) throw new Error(`no images found in ${ASSET_GALLERY}`);
   await writeFile(GALLERY_MARKER, version + '\n');
-  console.log(`✓ fetch-release: served ${images.length} gallery image(s) → src/assets/gallery/`);
+  console.log(`✓ fetch-release: served ${count} gallery image(s) → src/assets/gallery/`);
 }
 
 async function main() {
@@ -456,8 +392,8 @@ async function main() {
   const pinned = process.env.PHYSICLAW_RELEASE_TAG;
   const force = !!process.env.FETCH_RELEASE_FORCE;
 
-  // Build-photo gallery (separate fixed-tag release). Non-fatal: a gallery
-  // hiccup shouldn't fail the whole docs build — the page just shows no photos.
+  // Build-photo gallery (separate fixed-tag release of pre-optimized images).
+  // Non-fatal: a gallery hiccup shouldn't fail the whole docs build.
   try {
     await fetchGallery(force);
   } catch (err) {
