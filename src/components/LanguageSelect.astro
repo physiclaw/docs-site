@@ -18,7 +18,7 @@ const targetCode = codes[(currentIndex + 1) % codes.length];
 const target = config.locales?.[targetCode];
 
 /** Current path with its locale segment swapped to `code`. */
-function hrefFor(code) {
+function hrefFor(code: string) {
   const segs = [...segments];
   if (codes.includes(segs[1])) segs[1] = code;
   else segs.splice(1, 0, code);
