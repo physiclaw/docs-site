@@ -4,6 +4,7 @@
 // docs source (./docs in production, ./physiclaw-docs in local dev — see
 // resolveDocsSrc), and split into src/content/docs/{en,zh} by scripts/sync-docs.mjs.
 import { defineConfig } from 'astro/config';
+import { unified } from '@astrojs/markdown-remark';
 import starlight from '@astrojs/starlight';
 import { loadDocsConfig, resolveDocsSrc } from './scripts/docs-config.mjs';
 
@@ -87,7 +88,10 @@ export default defineConfig({
     '/': `/${DEFAULT_LOCALE}/`,
     '/hardware-gallery': `/${DEFAULT_LOCALE}/hardware-gallery/`,
   },
-  markdown: { rehypePlugins: [rehypeExternalLinksNewTab] },
+  // Astro 6.4+ markdown processor (the default unified() pipeline) with our
+  // rehype plugin. Starlight appends its own remark/rehype plugins onto this
+  // processor, so gfm/smartypants/asides/anchors are preserved.
+  markdown: { processor: unified({ rehypePlugins: [rehypeExternalLinksNewTab] }) },
   integrations: [
     starlight({
       title: { en: 'PhysiClaw Docs', 'zh-CN': 'PhysiClaw 文档' },
