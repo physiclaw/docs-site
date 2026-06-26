@@ -91,9 +91,19 @@ link to these from the PhysiClaw docs source):
 | `/downloads/physiclaw_manual.pdf` · `/downloads/physiclaw装配手册.pdf` | manual PDF download (original filenames) |
 | `/downloads/physiclaw_custom_parts.zip` | the 9 custom STEP parts                   |
 | `/downloads/physiclaw_assembly_3d.zip`  | assembled 3D model — repackaged from `physiclaw_camera_frame_assembled.zip` (inner `.step` renamed to match the zip stem) |
+| `/en/hardware-gallery` · `/zh/hardware-gallery` | build-photo gallery (`/hardware-gallery` redirects to en) |
 
 > `sourcing-guide` (not `sourcing`) so it never collides with the existing Starlight
 > `hardware/sourcing` map page's generated route.
+
+The **build-photo gallery** comes from a separate, fixed-tag release (`physiclaw-hardware-gallery`)
+that's updated in place, so `fetchGallery()` fetches it independently — keyed on the asset's upload
+time rather than a version tag — and lays the images under `src/assets/gallery/` (so Astro's image
+pipeline optimizes them). The en/zh pages (`src/pages/{en,zh}/hardware-gallery.astro`) render the
+shared `src/components/HardwareGallery.astro` inside `<StarlightPage>` (site theme, no sidebar):
+optimized webp thumbnails + a larger lightbox image (lazy-loaded), a natural-aspect masonry grid,
+and a pure-CSS lightbox with prev/next. A gallery fetch failure is non-fatal (the page just shows no
+photos).
 
 Release selection is robust and overridable via env:
 

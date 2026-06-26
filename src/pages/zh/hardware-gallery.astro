@@ -1,0 +1,15 @@
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import Gallery from '../../components/HardwareGallery.astro';
+---
+
+<StarlightPage
+  hasSidebar={false}
+  frontmatter={{
+    title: '硬件图集',
+    description: '组装完成的 PhysiClaw 硬件实物照片。',
+    tableOfContents: false,
+  }}
+>
+  <Gallery lang="zh" />
+</StarlightPage>

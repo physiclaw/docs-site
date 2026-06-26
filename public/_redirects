@@ -6,3 +6,5 @@
 # file is the Cloudflare equivalent. Cloudflare Pages follows _redirects rules
 # before serving a static asset at the same path, so this wins over index.html.
 /    /en/    302
+# Short URL for the gallery → default-locale page (same no-flash reason as "/").
+/hardware-gallery    /en/hardware-gallery/    302

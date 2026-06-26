@@ -20,3 +20,5 @@ public/en/hardware/sourcing-guide
 public/zh/hardware/sourcing-guide
 public/downloads
 public/.release-version
+# Build photos fetched into src/assets/ (Astro optimizes them); never committed.
+src/assets/gallery

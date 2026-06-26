@@ -4,6 +4,7 @@
   "buildCommand": "pnpm build",
   "outputDirectory": "dist",
   "redirects": [
-    { "source": "/", "destination": "/en/", "permanent": false }
+    { "source": "/", "destination": "/en/", "permanent": false },
+    { "source": "/hardware-gallery", "destination": "/en/hardware-gallery/", "permanent": false }
   ]
 }

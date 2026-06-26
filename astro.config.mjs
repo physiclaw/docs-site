@@ -83,7 +83,10 @@ function rehypeExternalLinksNewTab() {
 
 export default defineConfig({
   site: 'https://docs.physiclaw.ai',
-  redirects: { '/': `/${DEFAULT_LOCALE}/` },
+  redirects: {
+    '/': `/${DEFAULT_LOCALE}/`,
+    '/hardware-gallery': `/${DEFAULT_LOCALE}/hardware-gallery/`,
+  },
   markdown: { rehypePlugins: [rehypeExternalLinksNewTab] },
   integrations: [
     starlight({

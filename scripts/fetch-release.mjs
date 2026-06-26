@@ -15,6 +15,7 @@
 //   /downloads/physiclaw装配手册.pdf         中文 manual PDF download
 //   /downloads/physiclaw_custom_parts.zip   the 9 custom STEP parts
 //   /downloads/physiclaw_assembly_3d.zip    assembled 3D model (.step), repackaged from the camera-frame asset
+//   src/assets/gallery/<name>                build photos (optimized by astro:assets), shown at /{en,zh}/hardware-gallery
 //
 // `sourcing-guide` (not `sourcing`) avoids colliding with the existing Starlight
 // `hardware/sourcing` map page's generated route.
@@ -366,6 +367,17 @@ const OWNED = [
   join(PUBLIC, 'downloads'),
 ];
 
+// The build-photo gallery is a SEPARATE, fixed-tag release (physiclaw-hardware-gallery)
+// that's updated in place — so it's fetched independently of the versioned hardware
+// release, keyed on the asset's upload time. Images land in src/assets/gallery/ (NOT
+// public/) so Astro's image pipeline optimizes them; the /hardware-gallery pages
+// (src/pages/{en,zh}/hardware-gallery.astro) import them via astro:assets.
+const GALLERY_TAG = 'physiclaw-hardware-gallery';
+const ASSET_GALLERY = 'physiclaw_hardware_gallery.zip';
+const GALLERY_DIR = join(ROOT, 'src', 'assets', 'gallery');
+const GALLERY_MARKER = join(GALLERY_DIR, '.gallery-version');
+const IMAGE_RE = /\.(png|jpe?g|webp|avif|gif)$/i;
+
 async function layDownManual(extractDir) {
   const files = await walk(extractDir);
   const assets = files.filter((f) => /(^|[\\/])assets[\\/]/.test(f));
@@ -397,6 +409,44 @@ async function layDownSourcing(extractDir) {
   }
 }
 
+/**
+ * Fetch the build-photo gallery (its own fixed-tag release) and lay the images
+ * out under public/gallery/. The tag never changes but its images get replaced
+ * in place, so the cache is keyed on the asset's upload time. On the offline
+ * path this throws before touching public/, so previously served images survive.
+ */
+async function fetchGallery(force) {
+  const release = await getReleaseByTag(GALLERY_TAG);
+  const asset = pickAsset(release, ASSET_GALLERY);
+  const version = String(asset.updated_at || asset.id);
+
+  const current = (await exists(GALLERY_MARKER)) ? (await readFile(GALLERY_MARKER, 'utf8')).trim() : null;
+  const haveImages =
+    (await exists(GALLERY_DIR)) && (await walk(GALLERY_DIR)).some((f) => IMAGE_RE.test(f));
+  if (!force && current === version && haveImages) {
+    console.log('✓ fetch-release: gallery up to date — skipping.');
+    return;
+  }
+
+  console.log(`• fetch-release: gallery → ${GALLERY_TAG}`);
+  const cacheDir = join(CACHE, 'gallery');
+  const zip = join(cacheDir, ASSET_GALLERY);
+  if (force || current !== version || !(await exists(zip))) {
+    console.log(`  ↓ ${ASSET_GALLERY}`);
+    await download(asset.browser_download_url, zip);
+  }
+  const work = join(cacheDir, 'extract');
+  await rm(work, { recursive: true, force: true });
+  unzip(zip, work);
+
+  const images = (await walk(work)).filter((f) => IMAGE_RE.test(f)).sort();
+  if (images.length === 0) throw new Error(`no images found in ${ASSET_GALLERY}`);
+  await rm(GALLERY_DIR, { recursive: true, force: true });
+  for (const img of images) await copyInto(img, join(GALLERY_DIR, basename(img)));
+  await writeFile(GALLERY_MARKER, version + '\n');
+  console.log(`✓ fetch-release: served ${images.length} gallery image(s) → src/assets/gallery/`);
+}
+
 async function main() {
   if (process.env.SKIP_FETCH_RELEASE) {
     console.log('• fetch-release: SKIP_FETCH_RELEASE set — skipping.');
@@ -405,6 +455,14 @@ async function main() {
 
   const pinned = process.env.PHYSICLAW_RELEASE_TAG;
   const force = !!process.env.FETCH_RELEASE_FORCE;
+
+  // Build-photo gallery (separate fixed-tag release). Non-fatal: a gallery
+  // hiccup shouldn't fail the whole docs build — the page just shows no photos.
+  try {
+    await fetchGallery(force);
+  } catch (err) {
+    console.warn(`⚠ fetch-release: gallery skipped — ${err.message}`);
+  }
 
   // What we've already served — read once, used by both the cache-skip and the
   // offline-fallback paths below.

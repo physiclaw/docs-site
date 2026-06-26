@@ -1,0 +1,15 @@
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import Gallery from '../../components/HardwareGallery.astro';
+---
+
+<StarlightPage
+  hasSidebar={false}
+  frontmatter={{
+    title: 'Hardware Gallery',
+    description: 'Build photos of an assembled PhysiClaw rig.',
+    tableOfContents: false,
+  }}
+>
+  <Gallery lang="en" />
+</StarlightPage>
