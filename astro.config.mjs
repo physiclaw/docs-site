@@ -4,6 +4,8 @@
 // ./docs (the CI-synced mirror; resolveDocsSrc), while `pnpm dev` reads it live
 // from the sibling ../PhysiClaw/docs checkout (DOCS_SRC, set by scripts/dev.mjs).
 // Either way it's split into src/content/docs/{en,zh} by scripts/sync-docs.mjs.
+import { existsSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'astro/config';
 import { unified } from '@astrojs/markdown-remark';
 import starlight from '@astrojs/starlight';
@@ -83,6 +85,33 @@ function rehypeExternalLinksNewTab() {
   return (/** @type {any} */ tree) => walk(tree);
 }
 
+// Dev-only: the hardware manual/sourcing-guide are static HTML laid into public/
+// by fetch-release.mjs (e.g. public/en/hardware/manual/index.html). Astro's dev
+// server serves public/ files by exact path but doesn't resolve a directory URL
+// (/en/hardware/manual/) to its index.html — so those pages 404 in `astro dev`,
+// though Vercel serves them in production. Rewrite a trailing-slash request to
+// index.html WHEN that public file exists, so dev matches prod. Scoped by the
+// existsSync check: Starlight's own routes have no public index.html, so they're
+// untouched. apply:'serve' keeps this out of the build.
+const PUBLIC_DIR = fileURLToPath(new URL('./public', import.meta.url));
+function serveStaticDirIndex() {
+  return {
+    name: 'physiclaw:serve-static-dir-index',
+    apply: /** @type {'serve'} */ ('serve'),
+    /** @param {any} server */
+    configureServer(server) {
+      server.middlewares.use((/** @type {any} */ req, /** @type {any} */ _res, /** @type {any} */ next) => {
+        const [path, query] = (req.url || '').split('?');
+        // path starts with '/', PUBLIC_DIR has none, so concatenation is a clean join.
+        if (path.endsWith('/') && existsSync(`${PUBLIC_DIR}${path}index.html`)) {
+          req.url = `${path}index.html${query ? `?${query}` : ''}`;
+        }
+        next();
+      });
+    },
+  };
+}
+
 export default defineConfig({
   site: 'https://docs.physiclaw.ai',
   redirects: {
@@ -93,6 +122,9 @@ export default defineConfig({
   // rehype plugin. Starlight appends its own remark/rehype plugins onto this
   // processor, so gfm/smartypants/asides/anchors are preserved.
   markdown: { processor: unified({ rehypePlugins: [rehypeExternalLinksNewTab] }) },
+  // Dev-only: serve the fetched static hardware pages at their directory URL
+  // (/en/hardware/manual/ → its index.html); see serveStaticDirIndex above.
+  vite: { plugins: [serveStaticDirIndex()] },
   integrations: [
     starlight({
       title: { en: 'PhysiClaw Docs', 'zh-CN': 'PhysiClaw 文档' },
