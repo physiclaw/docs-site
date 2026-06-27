@@ -1,8 +1,9 @@
 // @ts-check
 // Standalone Starlight docs site for PhysiClaw → docs.physiclaw.ai.
-// Content is authored in physiclaw/PhysiClaw under docs/, mirrored into this repo's
-// docs source (./docs in production, ./physiclaw-docs in local dev — see
-// resolveDocsSrc), and split into src/content/docs/{en,zh} by scripts/sync-docs.mjs.
+// Content is authored in physiclaw/PhysiClaw under docs/. The build reads it from
+// ./docs (the CI-synced mirror; resolveDocsSrc), while `pnpm dev` reads it live
+// from the sibling ../PhysiClaw/docs checkout (DOCS_SRC, set by scripts/dev.mjs).
+// Either way it's split into src/content/docs/{en,zh} by scripts/sync-docs.mjs.
 import { defineConfig } from 'astro/config';
 import { unified } from '@astrojs/markdown-remark';
 import starlight from '@astrojs/starlight';
@@ -13,8 +14,8 @@ const DEFAULT_LOCALE = 'en'; // ← change this one value to switch the default 
 // Navigation lives WITH the content, not in this renderer: <docs-src>/docs.json
 // (authored in the code repo alongside the docs) declares the sidebar sections and
 // the order of pages within them, so editing the nav is a docs change, not a
-// renderer change. The docs source is ./docs in production (CI mirrors
-// PhysiClaw/docs into it) or ./physiclaw-docs in local dev. The loader validates
+// renderer change. The docs source is resolved by resolveDocsSrc (./docs in
+// production; ../PhysiClaw/docs under `pnpm dev`, via DOCS_SRC). The loader validates
 // docs.json and maps slugs → Starlight links; see docs.schema.json for the schema.
 const DOCS_SRC = resolveDocsSrc();
 const { sidebar: SIDEBAR, orphans, strayTranslations } = loadDocsConfig({

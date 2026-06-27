@@ -18,17 +18,21 @@ physiclaw/PhysiClaw   docs/      →   docs/        →   src/content/docs/{en,z
 (content, bilingual)   mirror         (this repo)      scripts/sync-docs.mjs         Starlight build
 ```
 
-## Docs source: `docs/` vs `physiclaw-docs/`
+## Docs source: `../PhysiClaw/docs`, `docs/`, `physiclaw-docs/`
 
-The build reads the authored docs from one directory, chosen by `resolveDocsSrc()`
-(`scripts/docs-config.mjs`):
+`pnpm dev` reads the docs **live from the sibling PhysiClaw checkout**: the dev
+orchestrator (`scripts/dev.mjs`) sets `DOCS_SRC=../PhysiClaw/docs` so edits in the
+code repo hot-reload here. The production **build** instead reads from one of two
+in-repo directories, chosen by `resolveDocsSrc()` (`scripts/docs-config.mjs`):
 
 | Directory          | Tracked?           | Used when                       | Purpose                                  |
 | ------------------ | ------------------ | ------------------------------- | ---------------------------------------- |
 | `docs/`            | **yes**            | always preferred when present   | the production mirror CI syncs PhysiClaw/docs into |
 | `physiclaw-docs/`  | no (gitignored)    | fallback, when `docs/` is absent | a local-dev checkout                     |
 
-Override with `DOCS_SRC=<dir>` (e.g. `DOCS_SRC=physiclaw-docs pnpm dev`).
+`DOCS_SRC=<dir>` overrides the source everywhere and wins in both paths (e.g.
+`DOCS_SRC=physiclaw-docs pnpm dev`). When unset, dev prefers `../PhysiClaw/docs`
+and falls back to `resolveDocsSrc()` (`docs/` → `physiclaw-docs/`) if it's absent.
 
 ## Documentation conventions
 
@@ -129,23 +133,32 @@ is already in `public/`, the build falls back to it instead of failing. Requires
 
 Requires **Node ≥ 22.12.0** and **pnpm**.
 
+`pnpm dev` reads the docs **live from a sibling PhysiClaw checkout** and hot-reloads
+on every edit there — clone the code repo next door:
+
 ```sh
 git clone https://github.com/physiclaw/docs-site.git
 cd docs-site
 pnpm install
 
-# Check out the code repo's docs/ into physiclaw-docs/ (the local-dev source)
-git clone --depth 1 https://github.com/physiclaw/PhysiClaw.git /tmp/physiclaw
-cp -r /tmp/physiclaw/docs physiclaw-docs
+# The code repo, checked out next to this one — dev reads ../PhysiClaw/docs
+git clone https://github.com/physiclaw/PhysiClaw.git ../PhysiClaw
 
-pnpm dev            # syncs, then serves at http://localhost:4321
+pnpm dev            # watches ../PhysiClaw/docs, serves at http://localhost:4321
 ```
 
-Re-run `pnpm sync:docs` after editing anything in the docs source.
+`pnpm dev` (`scripts/dev.mjs`) does it all: it **watches the docs source and
+re-syncs on every change** (Starlight hot-reloads — no manual `sync:docs`), and
+fetches the hardware-release artifacts **only when they're missing** — if they're
+already laid down under `public/` (+ the gallery images), it skips the fetch
+entirely (no network). Point it elsewhere with `DOCS_SRC=<dir> pnpm dev` (falls
+back to `./docs` / `physiclaw-docs` when `../PhysiClaw` isn't present); delete
+`public/` to force a re-fetch. Editing `docs.json` (the sidebar) still needs a
+dev-server restart.
 
 | Command          | Action                                                |
 | ---------------- | ----------------------------------------------------- |
-| `pnpm dev`       | Sync + serve at `localhost:4321`                      |
+| `pnpm dev`       | Watch `../PhysiClaw/docs` + serve at `localhost:4321` (fetches release only if missing) |
 | `pnpm sync:docs` | Split the docs source → `src/content/docs/{en,zh}`    |
 | `pnpm fetch:release` | Fetch the latest hardware release → `public/`     |
 | `pnpm build`     | Fetch release + sync + build the static site to `./dist/` |

@@ -4,8 +4,8 @@
 //
 // docs.json is authored WITH the content (see the docs source's docs.schema.json):
 // each section lists its pages, in order, by slug — e.g. "start/introduction".
-// The docs source is ./docs in production or ./physiclaw-docs in local dev
-// (resolveDocsSrc).
+// The docs source is ./docs in production (resolveDocsSrc) or ../PhysiClaw/docs
+// under `pnpm dev` (DOCS_SRC, set by scripts/dev.mjs).
 
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join, sep } from 'node:path';
@@ -20,8 +20,8 @@ export const NON_CONTENT_FILES = new Set(['docs.json', 'docs.schema.json', 'READ
 
 /**
  * Resolve which directory holds the authored docs. Precedence:
- *   1. an explicit `DOCS_SRC` env var (override — e.g. `DOCS_SRC=physiclaw-docs` for
- *      local dev against a separate checkout);
+ *   1. an explicit `DOCS_SRC` env var (override — e.g. `pnpm dev` sets it to the
+ *      sibling `../PhysiClaw/docs` checkout; see scripts/dev.mjs);
  *   2. `./docs` — the tracked production mirror that CI syncs PhysiClaw/docs into;
  *   3. `./physiclaw-docs` — the local-dev checkout (gitignored), used when `docs/`
  *      isn't present.
