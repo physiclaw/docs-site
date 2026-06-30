@@ -2,7 +2,13 @@
 // Overrides Starlight's PageTitle to show a breadcrumb path above the title,
 // so readers always know which section they're in. The trail is derived from
 // the sidebar, which Starlight has already localized — so en/zh just work.
-const { sidebar, entry } = Astro.locals.starlightRoute;
+//
+// It also renders a "Copy page" button at the content column's top-right that
+// copies the page's raw Markdown to the clipboard. The source is embedded at
+// build time as JSON in a <script> (see the markdownPayload comment below). It's
+// the content entry's body, i.e. the authored Markdown; we strip the components
+// import that scripts/sync-docs.mjs injects so the copy reads like the original.
+const { sidebar, entry, locale } = Astro.locals.starlightRoute;
 
 type SidebarEntry = (typeof sidebar)[number];
 
@@ -24,6 +30,26 @@ const groups = trailToCurrent(sidebar) ?? [];
 // Only show a breadcrumb when the page lives under a section — otherwise it
 // would just repeat the title.
 const crumbs = groups.length ? [...groups, title] : [];
+
+const isZh = (locale ?? Astro.url.pathname.split('/')[1]) === 'zh';
+const COPY_LABEL = isZh ? '复制页面' : 'Copy page';
+const COPIED_LABEL = isZh ? '已复制' : 'Copied!';
+
+// The raw Markdown to copy: the entry body, prefixed with the title as an H1
+// (frontmatter isn't in the body). We strip the components import that
+// scripts/sync-docs.mjs's injectComponentImports() adds, so the copy matches the
+// authored source — this regex must track the import line that function emits.
+const body = (entry.body ?? '')
+  .replace(/^\s*import\s+\{[^}]*\}\s+from\s+['"]@astrojs\/starlight\/components['"];?\s*\n/, '')
+  .trim();
+const markdown = `# ${title}\n\n${body}\n`;
+
+// Embed the raw Markdown as JSON in a <script> so it round-trips byte-for-byte:
+// JSON.stringify escapes quotes/backslashes/newlines/control chars, and escaping
+// every "<" to < (a no-op for JSON.parse) means the payload can never contain
+// "</script>" or "<!--", so arbitrary Markdown/MDX — angle brackets, backticks,
+// ${...}, even a literal "</script>" — can't break out of the element or the page.
+const markdownPayload = JSON.stringify(markdown).replace(/</g, '\\u003c');
 ---
 
 {
@@ -37,4 +63,60 @@ const crumbs = groups.length ? [...groups, title] : [];
     </nav>
   )
 }
-<h1 id="_top">{title}</h1>
+<div class="page-title-row">
+  <h1 id="_top">{title}</h1>
+  <button
+    class="copy-page"
+    type="button"
+    data-copy-page
+    data-label-copy={COPY_LABEL}
+    data-label-copied={COPIED_LABEL}
+    aria-label={COPY_LABEL}
+  >
+    <svg class="i-copy" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <rect width="14" height="14" x="8" y="8" rx="2" />
+      <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+    </svg>
+    <svg class="i-check" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M20 6 9 17l-5-5" />
+    </svg>
+    <span class="copy-page-label">{COPY_LABEL}</span>
+  </button>
+</div>
+<script type="application/json" data-page-markdown is:inline set:html={markdownPayload} />
+
+<script>
+  // Copy the page's raw Markdown to the clipboard. The source is embedded as JSON
+  // in the [data-page-markdown] <script>, so JSON.parse restores it byte-for-byte
+  // regardless of the page's special characters. Falls back to execCommand on
+  // non-secure contexts.
+  const btn = document.querySelector<HTMLButtonElement>('[data-copy-page]');
+  const holder = document.querySelector<HTMLElement>('[data-page-markdown]');
+  if (btn && holder) {
+    const label = btn.querySelector<HTMLElement>('.copy-page-label');
+    let reset: ReturnType<typeof setTimeout>;
+    btn.addEventListener('click', async () => {
+      let md = '';
+      try { md = JSON.parse(holder.textContent || '""'); } catch {}
+      try {
+        await navigator.clipboard.writeText(md);
+      } catch {
+        const ta = document.createElement('textarea');
+        ta.value = md;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); } catch {}
+        ta.remove();
+      }
+      btn.classList.add('copied');
+      if (label) label.textContent = btn.dataset.labelCopied ?? label.textContent;
+      clearTimeout(reset);
+      reset = setTimeout(() => {
+        btn.classList.remove('copied');
+        if (label) label.textContent = btn.dataset.labelCopy ?? label.textContent;
+      }, 2000);
+    });
+  }
+</script>

@@ -189,6 +189,57 @@ body {
   margin-top: 0.25rem;
 }
 
+/* Title row holds the <h1> and the "Copy page" button (top-right of content). */
+.page-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+/* "Copy page" button — small, monospace, ghost outline; accent on hover and
+   when copied. Sits at the top of the title row so it reads as a page action. */
+.copy-page {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.4rem;
+  padding: 0.34rem 0.62rem;
+  font: inherit;
+  font-size: 0.78rem;
+  line-height: 1;
+  color: var(--sl-color-gray-2);
+  background: transparent;
+  border: 1px solid var(--sl-color-hairline-light);
+  border-radius: 7px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.15s, border-color 0.15s, background-color 0.15s;
+}
+.copy-page:hover {
+  color: var(--sl-color-white);
+  border-color: var(--sl-color-gray-4);
+}
+.copy-page:focus-visible {
+  outline: 2px solid var(--sl-color-accent);
+  outline-offset: 2px;
+}
+.copy-page svg { flex: none; }
+.copy-page .i-check { display: none; }
+.copy-page.copied {
+  color: var(--sl-color-accent);
+  border-color: var(--sl-color-accent);
+}
+.copy-page.copied .i-copy { display: none; }
+.copy-page.copied .i-check { display: inline; }
+
+/* On narrow screens keep just the icon to save room. */
+@media (max-width: 30rem) {
+  .copy-page .copy-page-label { display: none; }
+  .copy-page { padding: 0.4rem; }
+}
+
 /* Breadcrumb path above the title — small, muted, grey. */
 .breadcrumbs {
   font-size: 0.75rem;
