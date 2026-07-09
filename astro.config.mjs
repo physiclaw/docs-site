@@ -167,6 +167,7 @@ export default defineConfig({
       },
       social: [
         { icon: 'github', label: 'GitHub', href: 'https://github.com/physiclaw/PhysiClaw' },
+        { icon: 'discord', label: 'Discord', href: 'https://discord.gg/FYdzTUumRx' },
       ],
       // "Edit page" links are injected per-page as frontmatter `editUrl` by
       // scripts/sync-docs.mjs (EDIT_BASE_URL), pointing at the real co-located

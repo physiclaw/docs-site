@@ -604,8 +604,8 @@ site-search button {
 /* The language select is a custom dropdown component (LanguageSelect.astro
    → <starlight-language-select>) and styles itself; nothing needed here. */
 
-/* Social link (GitHub): show its label — Starlight ships it as an sr-only span
-   before the icon, so reveal it and order it after the icon → "[icon] GitHub".
+/* Social links (GitHub, Discord): show each label — Starlight ships it as an
+   sr-only span before the icon, so reveal it and order it after → "[icon] Label".
    Default ink (not the accent), a touch larger, brightening to accent on hover. */
 .social-icons a {
   align-items: center;
