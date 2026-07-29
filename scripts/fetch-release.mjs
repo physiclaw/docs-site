@@ -24,6 +24,9 @@
 // release tag; we rewrite it to the site-relative /downloads/... path so it always
 // points at the parts we actually serve (see rewriteCustomPartsLink).
 //
+// The release HTML also ships without a favicon <link>, so the manual and sourcing
+// pages get the site's icons injected into <head> at lay-down (see injectFavicon).
+//
 // Release selection (robust, overridable):
 //   - default: list releases, keep tags matching `physiclaw-hardware-v<semver>`,
 //     pick the highest version (newest hardware release wins).
@@ -148,6 +151,23 @@ export function rewriteCustomPartsLink(html, url = CUSTOM_PARTS_URL) {
     'g',
   );
   return html.replace(re, url);
+}
+
+// The same icons the Starlight pages use.
+export const FAVICON_LINKS =
+  '<link rel="icon" href="/favicon.ico" sizes="32x32">' +
+  '<link rel="icon" href="/favicon.svg" type="image/svg+xml">';
+
+/**
+ * Inject the site's favicon <link>s right after <head>. The release HTML ships
+ * without one, and the implicit /favicon.ico fallback is unreliable (Chrome
+ * caches a prior 404 for it). No-op if the page already declares an icon.
+ * @param {string} html
+ * @returns {string}
+ */
+export function injectFavicon(html) {
+  if (/<link[^>]*rel=["']?(?:shortcut )?icon/i.test(html)) return html;
+  return html.replace(/<head(\s[^>]*)?>/i, (m) => m + '\n' + FAVICON_LINKS);
 }
 
 // ── IO ──────────────────────────────────────────────────────────────────────
@@ -282,6 +302,13 @@ async function copyInto(src, dest) {
   await copyFile(src, dest);
 }
 
+/** Lay down a fetched HTML page: apply `transform`, inject the favicon links. */
+async function writeHtmlInto(src, dest, transform = (h) => h) {
+  const html = injectFavicon(transform(await readFile(src, 'utf8')));
+  await mkdir(dirname(dest), { recursive: true });
+  await writeFile(dest, html);
+}
+
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const PUBLIC = join(ROOT, 'public');
 const CACHE = join(ROOT, '.release-cache');
@@ -324,7 +351,7 @@ async function layDownManual(extractDir) {
 
   for (const locale of LOCALES) {
     const out = pageDir(locale, MANUAL_SLUG);
-    await copyInto(html[locale], join(out, 'index.html'));
+    await writeHtmlInto(html[locale], join(out, 'index.html'));
     for (const a of assets) {
       await copyInto(a, join(out, 'assets', basename(a)));
     }
@@ -339,10 +366,11 @@ async function layDownSourcing(extractDir) {
   const files = await walk(extractDir);
   const html = splitByLocale(files, '.html', 'sourcing page');
   for (const locale of LOCALES) {
-    const fixed = rewriteCustomPartsLink(await readFile(html[locale], 'utf8'));
-    const dest = join(pageDir(locale, SOURCING_SLUG), 'index.html');
-    await mkdir(dirname(dest), { recursive: true });
-    await writeFile(dest, fixed);
+    await writeHtmlInto(
+      html[locale],
+      join(pageDir(locale, SOURCING_SLUG), 'index.html'),
+      rewriteCustomPartsLink,
+    );
   }
 }
 

@@ -83,7 +83,8 @@ published as assets on the [`physiclaw/PhysiClaw` GitHub releases](https://githu
 tagged `physiclaw-hardware-v<semver>`. `scripts/fetch-release.mjs` runs at build time, fetches the
 **latest** hardware release, and lays its artifacts into `public/` so they deploy as plain static
 files. The sourcing guide's hardcoded custom-parts download link is rewritten to the site-relative
-path we serve.
+path we serve, and both pages get the site's favicon `<link>`s injected (the release HTML ships
+without one).
 
 Stable URLs (same locale-prefixed `/<locale>/hardware/<slug>/` pattern as the rest of the site —
 link to these from the PhysiClaw docs source):

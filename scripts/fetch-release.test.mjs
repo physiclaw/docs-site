@@ -7,6 +7,8 @@ import {
   isAscii,
   rewriteCustomPartsLink,
   CUSTOM_PARTS_URL,
+  injectFavicon,
+  FAVICON_LINKS,
 } from './fetch-release.mjs';
 
 test('parseHardwareVersion accepts only hardware tags', () => {
@@ -71,4 +73,22 @@ test('rewriteCustomPartsLink works for a future tag and leaves other links alone
   const out = rewriteCustomPartsLink(html);
   assert.ok(out.includes(`href="${CUSTOM_PARTS_URL}"`));
   assert.ok(out.includes('https://item.taobao.com/item.htm?id=123'));
+});
+
+test('injectFavicon adds icon links right after <head>', () => {
+  const html = '<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="UTF-8">\n</head>';
+  const out = injectFavicon(html);
+  assert.ok(out.includes('<head>\n' + FAVICON_LINKS));
+});
+
+test('injectFavicon handles <head> with attributes', () => {
+  const out = injectFavicon('<head data-x="1"><title>t</title></head>');
+  assert.ok(out.startsWith('<head data-x="1">\n' + FAVICON_LINKS));
+});
+
+test('injectFavicon leaves a page that already declares an icon alone', () => {
+  const html = '<head><link rel="icon" href="/custom.png"></head>';
+  assert.equal(injectFavicon(html), html);
+  const shortcut = '<head><link rel="shortcut icon" href="/f.ico"></head>';
+  assert.equal(injectFavicon(shortcut), shortcut);
 });
