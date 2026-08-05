@@ -524,11 +524,28 @@ starlight-toc a[aria-current='true'] {
   background-color: var(--pc-callout-tip); /* green check */
 }
 
-/* FileTree — rounded box. It already inherits the palette via the
-   --sl-color-gray-* tokens; just round the corners and use the strong hairline. */
+/* FileTree — the same surface as a code block, since it's the same kind of
+   monospace panel. All four properties reuse the tokens Expressive Code is wired
+   to in astro.config (codeBackground / terminal frames → --pc-code-block,
+   borderColor → --pc-code-border, borderRadius 9px, frameBoxShadowCssValue →
+   --pc-code-shadow), so a FileTree and a bash block stay identical in both themes
+   and track any retune of that surface. Unlayered, so these beat FileTree.astro's
+   @layer starlight.components rules. */
 starlight-file-tree {
-  border-color: var(--sl-color-hairline-light);
-  border-radius: 8px;
+  background-color: var(--pc-code-block);
+  border-color: var(--pc-code-border);
+  border-radius: 9px;
+  box-shadow: var(--pc-code-shadow);
+}
+
+/* Drop the per-filetype icons on files (Starlight's rehype-file-tree bakes an
+   <svg class="tree-icon"> into every entry — README.md gets seti:info, *.yml
+   gets seti:yml, etc.). The extension-guessing is noisy and often wrong for our
+   filenames, and the name itself already says what the file is. Directories keep
+   their folder icon as the affordance that distinguishes them from files.
+   Unlayered, so this beats FileTree.astro's @layer starlight.components rule. */
+starlight-file-tree .file svg.tree-icon {
+  display: none;
 }
 
 /* ── Cards ─────────────────────────────────────────────── */
