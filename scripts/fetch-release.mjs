@@ -135,19 +135,20 @@ export function isAscii(s) {
 }
 
 /**
- * Rewrite the sourcing guide's hardcoded custom-parts download link (which points
- * at a pinned release tag) to our site-relative path. Matches any pinned tag so
- * it keeps working as releases roll forward.
+ * Rewrite the sourcing guide's hardcoded custom-parts download link to our
+ * site-relative path. The guide has linked the zip two ways over time — a pinned
+ * release tag (`releases/download/<tag>/<asset>`) and, since hardware v0.20, the
+ * rolling `releases/latest/download/<asset>` — so both spellings are matched and
+ * the page always points at the parts we actually serve.
  * @param {string} html
  * @param {string} [url]
  * @returns {string}
  */
 export function rewriteCustomPartsLink(html, url = CUSTOM_PARTS_URL) {
+  const asset = ASSET_PARTS.replace(/[.]/g, '\\$&');
+  const pinned = 'download/' + TAG_PREFIX.replace(/[-]/g, '\\$&') + '[^"\'\\s/]+/';
   const re = new RegExp(
-    'https://github\\.com/[^"\'\\s]*/releases/download/' +
-      TAG_PREFIX.replace(/[-]/g, '\\$&') +
-      '[^"\'\\s/]+/' +
-      ASSET_PARTS.replace(/[.]/g, '\\$&'),
+    'https://github\\.com/[^"\'\\s]*/releases/(?:' + pinned + '|latest/download/)' + asset,
     'g',
   );
   return html.replace(re, url);

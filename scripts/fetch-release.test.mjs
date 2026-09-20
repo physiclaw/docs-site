@@ -75,6 +75,16 @@ test('rewriteCustomPartsLink works for a future tag and leaves other links alone
   assert.ok(out.includes('https://item.taobao.com/item.htm?id=123'));
 });
 
+test('rewriteCustomPartsLink retargets the rolling latest-release link too', () => {
+  const html =
+    '<a href="https://github.com/physiclaw/PhysiClaw/releases/latest/download/physiclaw_custom_parts.zip">parts</a>' +
+    '<a href="https://github.com/physiclaw/PhysiClaw/releases/latest">all releases</a>';
+  const out = rewriteCustomPartsLink(html);
+  assert.ok(out.includes(`href="${CUSTOM_PARTS_URL}"`));
+  assert.ok(!out.includes('latest/download'));
+  assert.ok(out.includes('https://github.com/physiclaw/PhysiClaw/releases/latest"'));
+});
+
 test('injectFavicon adds icon links right after <head>', () => {
   const html = '<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="UTF-8">\n</head>';
   const out = injectFavicon(html);
