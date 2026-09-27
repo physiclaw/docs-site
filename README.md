@@ -78,13 +78,13 @@ adding a page is a one-line edit in `docs.json` — no renderer change.
 
 ## Hardware release artifacts (build manual, sourcing guide, STEP parts)
 
-The build manual, sourcing guide, extrusion drawing, and 3D-printed STEP parts are **not in this repo** — they're
+The build manual, sourcing guide, extrusion tech drawing, and 3D-printed STEP parts are **not in this repo** — they're
 published as assets on the [`physiclaw/PhysiClaw` GitHub releases](https://github.com/physiclaw/PhysiClaw/releases),
 tagged `physiclaw-hardware-v<semver>`. `scripts/fetch-release.mjs` runs at build time, fetches the
 **latest** hardware release, and lays its artifacts into `public/` so they deploy as plain static
-files. The sourcing guide's GitHub download links (the custom-parts zip, the extrusion drawing
+files. The sourcing guide's GitHub download links (the custom-parts zip, the extrusion tech drawing
 PDFs) are rewritten to the site-relative paths we serve, and every fetched page gets the site's
-favicon `<link>`s injected (the release HTML ships without one). The extrusion drawing's HTML
+favicon `<link>`s injected (the release HTML ships without one). The extrusion tech drawing's HTML
 rides inside the sourcing-guide zip under `drawing/` and its PDFs are direct release assets;
 releases that predate it just serve no drawing.
 
@@ -95,8 +95,8 @@ link to these from the PhysiClaw docs source):
 | --------------------------------------- | ----------------------------------------- |
 | `/en/hardware/manual/` · `/zh/hardware/manual/` | build manual (HTML, with `assets/` SVGs)  |
 | `/en/hardware/sourcing-guide/` · `/zh/hardware/sourcing-guide/` | sourcing guide (HTML) |
-| `/en/hardware/extrusion-drawing/` · `/zh/hardware/extrusion-drawing/` | extrusion cut & drill drawing (HTML, one A4 sheet) |
-| `/downloads/physiclaw_extrusion_drawing_en.pdf` · `…_zh.pdf` | extrusion drawing PDF download (the sourcing guide's note links these) |
+| `/en/hardware/extrusion-drawing/` · `/zh/hardware/extrusion-drawing/` | extrusion tech drawing, cut & drill (HTML, one A4 sheet) |
+| `/downloads/physiclaw_extrusion_drawing_en.pdf` · `…_zh.pdf` | extrusion tech drawing PDF download (the sourcing guide's note links these) |
 | `/downloads/physiclaw_manual.pdf` · `/downloads/physiclaw装配手册.pdf` | manual PDF download (original filenames) |
 | `/downloads/physiclaw_custom_parts.zip` | the 9 custom STEP parts                   |
 | `/downloads/physiclaw_assembly_3d.zip`  | assembled 3D model — repackaged from `physiclaw_camera_frame_assembled.zip` (inner `.step` renamed to match the zip stem) |

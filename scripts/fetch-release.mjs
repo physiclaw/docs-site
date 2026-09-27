@@ -11,12 +11,12 @@
 //   /zh/hardware/manual/         build manual, 中文
 //   /en/hardware/sourcing-guide/   sourcing guide, English
 //   /zh/hardware/sourcing-guide/   sourcing guide, 中文
-//   /en/hardware/extrusion-drawing/  extrusion cut & drill drawing, English (one A4 sheet)
-//   /zh/hardware/extrusion-drawing/  extrusion cut & drill drawing, 中文
+//   /en/hardware/extrusion-drawing/  extrusion tech drawing (cut & drill), English (one A4 sheet)
+//   /zh/hardware/extrusion-drawing/  extrusion tech drawing (cut & drill), 中文
 //   /downloads/physiclaw_manual.pdf         English manual PDF download
 //   /downloads/physiclaw装配手册.pdf         中文 manual PDF download
-//   /downloads/physiclaw_extrusion_drawing_en.pdf   extrusion drawing PDF, English
-//   /downloads/physiclaw_extrusion_drawing_zh.pdf   extrusion drawing PDF, 中文
+//   /downloads/physiclaw_extrusion_drawing_en.pdf   extrusion tech drawing PDF, English
+//   /downloads/physiclaw_extrusion_drawing_zh.pdf   extrusion tech drawing PDF, 中文
 //   /downloads/physiclaw_custom_parts.zip   the 9 custom STEP parts
 //   /downloads/physiclaw_assembly_3d.zip    assembled 3D model (.step), repackaged from the camera-frame asset
 //   src/assets/gallery/{thumb,full}/         pre-optimized build photos, shown at /{en,zh}/hardware-gallery
@@ -29,7 +29,7 @@
 // /downloads/... paths so they always point at the copies we actually serve
 // (see rewriteDownloadLinks).
 //
-// The extrusion drawing rides inside the sourcing-guide zip under drawing/
+// The extrusion tech drawing rides inside the sourcing-guide zip under drawing/
 // (hardware releases since the drawing was added); older releases simply have
 // no drawing pages.
 //
@@ -69,7 +69,7 @@ export const ASSET_MANUAL = 'physiclaw-assembly-manual.zip';
 export const ASSET_SOURCING = 'physiclaw-sourcing-guide.zip';
 export const ASSET_PARTS = 'physiclaw_custom_parts.zip';
 export const ASSET_ASSEMBLY_3D = 'physiclaw_camera_frame_assembled.zip';
-// The extrusion drawing: its HTML rides in the sourcing-guide zip's drawing/
+// The extrusion tech drawing: its HTML rides in the sourcing-guide zip's drawing/
 // folder, its PDFs are direct release assets — ASCII names with a locale
 // suffix, one per served locale.
 export const DRAWING_DIR = 'drawing';
@@ -163,7 +163,7 @@ export function isAscii(s) {
 /**
  * Rewrite the sourcing guide's GitHub release download links to our
  * site-relative /downloads/ paths, for every `download` asset in ASSETS
- * (the custom-parts zip and the extrusion drawing PDFs). The guide has
+ * (the custom-parts zip and the extrusion tech drawing PDFs). The guide has
  * linked assets two ways over time — a pinned release tag
  * (`releases/download/<tag>/<asset>`) and, since hardware v0.20, the rolling
  * `releases/latest/download/<asset>` — so both spellings are matched and the
@@ -424,14 +424,14 @@ async function layDownSourcing(extractDir) {
 }
 
 /**
- * The extrusion drawing pages from the sourcing zip's drawing/ folder, at
+ * The extrusion tech drawing pages from the sourcing zip's drawing/ folder, at
  * /<locale>/hardware/extrusion-drawing/. (The PDFs are direct release
  * assets and reach /downloads/ through ASSETS.) Releases that predate the
  * drawing have no drawing/ folder; then nothing is laid down.
  */
 async function layDownDrawing(files) {
   if (files.length === 0) {
-    console.warn('  ⚠ sourcing: no drawing/ in the archive — extrusion drawing not served');
+    console.warn('  ⚠ sourcing: no drawing/ in the archive — extrusion tech drawing not served');
     return;
   }
   for (const locale of LOCALES) {

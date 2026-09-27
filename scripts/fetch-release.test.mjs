@@ -94,7 +94,7 @@ test('rewriteDownloadLinks retargets the rolling latest-release link too', () =>
   assert.ok(out.includes('https://github.com/physiclaw/PhysiClaw/releases/latest"'));
 });
 
-test('rewriteDownloadLinks retargets the extrusion drawing PDFs per locale', () => {
+test('rewriteDownloadLinks retargets the extrusion tech drawing PDFs per locale', () => {
   const base = 'https://github.com/physiclaw/PhysiClaw/releases/latest/download/';
   const html =
     `<a href="${base}physiclaw_extrusion_drawing_en.pdf">drawing</a>` +
