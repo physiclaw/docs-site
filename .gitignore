@@ -18,6 +18,8 @@ public/en/hardware/manual
 public/zh/hardware/manual
 public/en/hardware/sourcing-guide
 public/zh/hardware/sourcing-guide
+public/en/hardware/extrusion-drawing
+public/zh/hardware/extrusion-drawing
 public/downloads
 public/.release-version
 # Build photos: fetched (pre-optimized) from the gallery release at build, never committed.

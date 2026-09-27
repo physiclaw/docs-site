@@ -5,8 +5,9 @@ import {
   compareVersions,
   pickLatestRelease,
   isAscii,
-  rewriteCustomPartsLink,
-  CUSTOM_PARTS_URL,
+  rewriteDownloadLinks,
+  ASSETS,
+  SERVED_DOWNLOADS,
   injectFavicon,
   FAVICON_LINKS,
 } from './fetch-release.mjs';
@@ -58,31 +59,56 @@ test('isAscii distinguishes English filename from 中文', () => {
   assert.equal(isAscii('physiclaw装配手册.html'), false);
 });
 
-test('rewriteCustomPartsLink retargets any pinned tag to the served path', () => {
+const CUSTOM_PARTS_URL = '/downloads/physiclaw_custom_parts.zip';
+
+test('SERVED_DOWNLOADS is exactly the download rows of ASSETS', () => {
+  const rows = ASSETS.filter((a) => a.download);
+  assert.deepEqual([...SERVED_DOWNLOADS.keys()], rows.map((a) => a.file));
+  assert.equal(SERVED_DOWNLOADS.get('physiclaw_custom_parts.zip'), CUSTOM_PARTS_URL);
+});
+
+test('rewriteDownloadLinks retargets any pinned tag to the served path', () => {
   const html =
     '<a href="https://github.com/physiclaw/PhysiClaw/releases/download/physiclaw-hardware-v0.1/physiclaw_custom_parts.zip">parts</a>';
-  const out = rewriteCustomPartsLink(html);
+  const out = rewriteDownloadLinks(html);
   assert.ok(out.includes(`href="${CUSTOM_PARTS_URL}"`));
   assert.ok(!out.includes('releases/download'));
 });
 
-test('rewriteCustomPartsLink works for a future tag and leaves other links alone', () => {
+test('rewriteDownloadLinks works for a future tag and leaves other links alone', () => {
   const html =
     '<a href="https://github.com/physiclaw/PhysiClaw/releases/download/physiclaw-hardware-v2.5/physiclaw_custom_parts.zip">p</a>' +
     '<a href="https://item.taobao.com/item.htm?id=123">buy</a>';
-  const out = rewriteCustomPartsLink(html);
+  const out = rewriteDownloadLinks(html);
   assert.ok(out.includes(`href="${CUSTOM_PARTS_URL}"`));
   assert.ok(out.includes('https://item.taobao.com/item.htm?id=123'));
 });
 
-test('rewriteCustomPartsLink retargets the rolling latest-release link too', () => {
+test('rewriteDownloadLinks retargets the rolling latest-release link too', () => {
   const html =
     '<a href="https://github.com/physiclaw/PhysiClaw/releases/latest/download/physiclaw_custom_parts.zip">parts</a>' +
     '<a href="https://github.com/physiclaw/PhysiClaw/releases/latest">all releases</a>';
-  const out = rewriteCustomPartsLink(html);
+  const out = rewriteDownloadLinks(html);
   assert.ok(out.includes(`href="${CUSTOM_PARTS_URL}"`));
   assert.ok(!out.includes('latest/download'));
   assert.ok(out.includes('https://github.com/physiclaw/PhysiClaw/releases/latest"'));
+});
+
+test('rewriteDownloadLinks retargets the extrusion drawing PDFs per locale', () => {
+  const base = 'https://github.com/physiclaw/PhysiClaw/releases/latest/download/';
+  const html =
+    `<a href="${base}physiclaw_extrusion_drawing_en.pdf">drawing</a>` +
+    `<a href="${base}physiclaw_extrusion_drawing_zh.pdf">加工图</a>`;
+  const out = rewriteDownloadLinks(html);
+  assert.ok(out.includes('href="/downloads/physiclaw_extrusion_drawing_en.pdf"'));
+  assert.ok(out.includes('href="/downloads/physiclaw_extrusion_drawing_zh.pdf"'));
+  assert.ok(!out.includes('github.com'));
+});
+
+test('rewriteDownloadLinks leaves release assets we do not serve alone', () => {
+  const html =
+    '<a href="https://github.com/physiclaw/PhysiClaw/releases/latest/download/physiclaw-sourcing-guide.zip">zip</a>';
+  assert.equal(rewriteDownloadLinks(html), html);
 });
 
 test('injectFavicon adds icon links right after <head>', () => {

@@ -11,8 +11,12 @@
 //   /zh/hardware/manual/         build manual, 中文
 //   /en/hardware/sourcing-guide/   sourcing guide, English
 //   /zh/hardware/sourcing-guide/   sourcing guide, 中文
+//   /en/hardware/extrusion-drawing/  extrusion cut & drill drawing, English (one A4 sheet)
+//   /zh/hardware/extrusion-drawing/  extrusion cut & drill drawing, 中文
 //   /downloads/physiclaw_manual.pdf         English manual PDF download
 //   /downloads/physiclaw装配手册.pdf         中文 manual PDF download
+//   /downloads/physiclaw_extrusion_drawing_en.pdf   extrusion drawing PDF, English
+//   /downloads/physiclaw_extrusion_drawing_zh.pdf   extrusion drawing PDF, 中文
 //   /downloads/physiclaw_custom_parts.zip   the 9 custom STEP parts
 //   /downloads/physiclaw_assembly_3d.zip    assembled 3D model (.step), repackaged from the camera-frame asset
 //   src/assets/gallery/{thumb,full}/         pre-optimized build photos, shown at /{en,zh}/hardware-gallery
@@ -20,9 +24,14 @@
 // `sourcing-guide` (not `sourcing`) avoids colliding with the existing Starlight
 // `hardware/sourcing` map page's generated route.
 //
-// The sourcing guide ships a hardcoded link to the custom-parts zip on a *pinned*
-// release tag; we rewrite it to the site-relative /downloads/... path so it always
-// points at the parts we actually serve (see rewriteCustomPartsLink).
+// The sourcing guide links its downloads (the custom-parts zip, the extrusion
+// drawing PDFs) at GitHub release URLs; we rewrite those to the site-relative
+// /downloads/... paths so they always point at the copies we actually serve
+// (see rewriteDownloadLinks).
+//
+// The extrusion drawing rides inside the sourcing-guide zip under drawing/
+// (hardware releases since the drawing was added); older releases simply have
+// no drawing pages.
 //
 // The release HTML also ships without a favicon <link>, so the manual and sourcing
 // pages get the site's icons injected into <head> at lay-down (see injectFavicon).
@@ -60,7 +69,12 @@ export const ASSET_MANUAL = 'physiclaw-assembly-manual.zip';
 export const ASSET_SOURCING = 'physiclaw-sourcing-guide.zip';
 export const ASSET_PARTS = 'physiclaw_custom_parts.zip';
 export const ASSET_ASSEMBLY_3D = 'physiclaw_camera_frame_assembled.zip';
-export const CUSTOM_PARTS_URL = '/downloads/physiclaw_custom_parts.zip';
+// The extrusion drawing: its HTML rides in the sourcing-guide zip's drawing/
+// folder, its PDFs are direct release assets — ASCII names with a locale
+// suffix, one per served locale.
+export const DRAWING_DIR = 'drawing';
+export const DRAWING_STEM = 'physiclaw_extrusion_drawing';
+const LOCALES = ['en', 'zh'];
 
 const dirName = (zipName) => zipName.replace(/\.zip$/, '');
 
@@ -69,13 +83,25 @@ const dirName = (zipName) => zipName.replace(/\.zip$/, '');
 //  - `download` assets are copied verbatim into /downloads/ under that name
 //    (the release filename and the served filename may differ);
 //  - `repackage` single-file archives are re-zipped so the inner file's stem
-//    matches the served zip's stem.
-const ASSETS = [
+//    matches the served zip's stem;
+//  - `optional: true` assets are skipped with a warning when the release
+//    predates them (the drawing PDFs), instead of failing the build.
+export const ASSETS = [
   { file: ASSET_MANUAL, extract: true },
   { file: ASSET_SOURCING, extract: true },
   { file: ASSET_PARTS, download: ASSET_PARTS },
   { file: ASSET_ASSEMBLY_3D, repackage: 'physiclaw_assembly_3d.zip' },
+  ...LOCALES.map((l) => {
+    const pdf = `${DRAWING_STEM}_${l}.pdf`;
+    return { file: pdf, download: pdf, optional: true };
+  }),
 ];
+
+// Release asset name → the /downloads/ path it is served at, for every
+// asset the sourcing guide may link.
+export const SERVED_DOWNLOADS = new Map(
+  ASSETS.filter((a) => a.download).map((a) => [a.file, `/downloads/${a.download}`]),
+);
 
 // ── Pure helpers (unit-tested) ──────────────────────────────────────────────
 
@@ -135,23 +161,25 @@ export function isAscii(s) {
 }
 
 /**
- * Rewrite the sourcing guide's hardcoded custom-parts download link to our
- * site-relative path. The guide has linked the zip two ways over time — a pinned
- * release tag (`releases/download/<tag>/<asset>`) and, since hardware v0.20, the
- * rolling `releases/latest/download/<asset>` — so both spellings are matched and
- * the page always points at the parts we actually serve.
+ * Rewrite the sourcing guide's GitHub release download links to our
+ * site-relative /downloads/ paths, for every `download` asset in ASSETS
+ * (the custom-parts zip and the extrusion drawing PDFs). The guide has
+ * linked assets two ways over time — a pinned release tag
+ * (`releases/download/<tag>/<asset>`) and, since hardware v0.20, the rolling
+ * `releases/latest/download/<asset>` — so both spellings are matched and the
+ * page always points at the copies we actually serve.
  * @param {string} html
- * @param {string} [url]
+ * @param {Map<string, string>} [served] asset name → served path
  * @returns {string}
  */
-export function rewriteCustomPartsLink(html, url = CUSTOM_PARTS_URL) {
-  const asset = ASSET_PARTS.replace(/[.]/g, '\\$&');
+export function rewriteDownloadLinks(html, served = SERVED_DOWNLOADS) {
+  const names = [...served.keys()].map((a) => a.replace(/[.]/g, '\\$&')).join('|');
   const pinned = 'download/' + TAG_PREFIX.replace(/[-]/g, '\\$&') + '[^"\'\\s/]+/';
   const re = new RegExp(
-    'https://github\\.com/[^"\'\\s]*/releases/(?:' + pinned + '|latest/download/)' + asset,
+    'https://github\\.com/[^"\'\\s]*/releases/(?:' + pinned + '|latest/download/)(' + names + ')',
     'g',
   );
-  return html.replace(re, url);
+  return html.replace(re, (_m, asset) => served.get(asset));
 }
 
 // The same icons the Starlight pages use.
@@ -208,6 +236,15 @@ function pickAsset(release, name) {
     throw new Error(`release ${release.tag_name} is missing asset "${name}"`);
   }
   return asset;
+}
+
+/** The ASSETS rows this release carries: optional ones only when present. */
+function presentAssets(release) {
+  return ASSETS.filter(({ file, optional }) => {
+    if (!optional || (release.assets || []).some((a) => a.name === file)) return true;
+    console.warn(`  ⚠ ${release.tag_name} has no "${file}" — skipped`);
+    return false;
+  });
 }
 
 async function exists(p) {
@@ -315,13 +352,12 @@ const PUBLIC = join(ROOT, 'public');
 const CACHE = join(ROOT, '.release-cache');
 const MARKER = join(PUBLIC, '.release-version');
 
-const LOCALES = ['en', 'zh'];
-
 // Served under the same locale-prefixed /<locale>/hardware/<slug>/ route pattern as
 // the rest of the site. `sourcing-guide` (not `sourcing`) so it never collides with
 // the existing Starlight `hardware/sourcing` map page's generated route.
 const MANUAL_SLUG = 'manual';
 const SOURCING_SLUG = 'sourcing-guide';
+const DRAWING_SLUG = 'extrusion-drawing';
 const pageDir = (locale, slug) => join(PUBLIC, locale, 'hardware', slug);
 // Probe file used to tell whether output is already present (cache/skip logic).
 const MANUAL_PROBE = join(pageDir('en', MANUAL_SLUG), 'index.html');
@@ -329,7 +365,7 @@ const MANUAL_PROBE = join(pageDir('en', MANUAL_SLUG), 'index.html');
 // Output dirs this script owns and regenerates. Wiped before each lay-down so
 // stale files from an older release never linger.
 const OWNED = [
-  ...LOCALES.flatMap((l) => [pageDir(l, MANUAL_SLUG), pageDir(l, SOURCING_SLUG)]),
+  ...LOCALES.flatMap((l) => [pageDir(l, MANUAL_SLUG), pageDir(l, SOURCING_SLUG), pageDir(l, DRAWING_SLUG)]),
   join(PUBLIC, 'downloads'),
 ];
 
@@ -345,7 +381,7 @@ const IMAGE_RE = /\.(png|jpe?g|webp|avif|gif)$/i;
 
 async function layDownManual(extractDir) {
   const files = await walk(extractDir);
-  const assets = files.filter((f) => /(^|[\\/])assets[\\/]/.test(f));
+  const { inside: assets } = partitionByDir(files, 'assets');
   if (assets.length === 0) throw new Error('manual: no assets/ found in archive');
   const html = splitByLocale(files, '.html', 'manual page');
   const pdf = splitByLocale(files, '.pdf', 'manual PDF');
@@ -363,15 +399,46 @@ async function layDownManual(extractDir) {
   }
 }
 
+/** Files under a `<dir>/` folder anywhere in the archive, and the rest. */
+function partitionByDir(files, dir) {
+  const re = new RegExp(`(^|[\\\\/])${dir}[\\\\/]`);
+  const inside = [];
+  const outside = [];
+  for (const f of files) (re.test(f) ? inside : outside).push(f);
+  return { inside, outside };
+}
+
 async function layDownSourcing(extractDir) {
   const files = await walk(extractDir);
-  const html = splitByLocale(files, '.html', 'sourcing page');
+  // The guide's own pages sit outside drawing/; the drawing's pages inside it.
+  const { inside: drawing, outside: guide } = partitionByDir(files, DRAWING_DIR);
+  const html = splitByLocale(guide, '.html', 'sourcing page');
   for (const locale of LOCALES) {
     await writeHtmlInto(
       html[locale],
       join(pageDir(locale, SOURCING_SLUG), 'index.html'),
-      rewriteCustomPartsLink,
+      rewriteDownloadLinks,
     );
+  }
+  await layDownDrawing(drawing);
+}
+
+/**
+ * The extrusion drawing pages from the sourcing zip's drawing/ folder, at
+ * /<locale>/hardware/extrusion-drawing/. (The PDFs are direct release
+ * assets and reach /downloads/ through ASSETS.) Releases that predate the
+ * drawing have no drawing/ folder; then nothing is laid down.
+ */
+async function layDownDrawing(files) {
+  if (files.length === 0) {
+    console.warn('  ⚠ sourcing: no drawing/ in the archive — extrusion drawing not served');
+    return;
+  }
+  for (const locale of LOCALES) {
+    const name = `${DRAWING_STEM}_${locale}.html`;
+    const html = files.find((f) => basename(f) === name);
+    if (!html) throw new Error(`sourcing: drawing/ is missing ${name}`);
+    await writeHtmlInto(html, join(pageDir(locale, DRAWING_SLUG), 'index.html'));
   }
 }
 
@@ -468,14 +535,15 @@ async function main() {
 
   // Downloads are independent — fetch concurrently (cold builds are dominated by
   // the ~18MB manual). Extraction is CPU-bound, so it stays sequential after.
-  await Promise.all(ASSETS.map(async ({ file }) => {
+  const assets = presentAssets(release);
+  await Promise.all(assets.map(async ({ file }) => {
     const zip = join(cacheDir, file);
     if (force || !(await exists(zip))) {
       console.log(`  ↓ ${file}`);
       await download(pickAsset(release, file).browser_download_url, zip);
     }
   }));
-  for (const { file, extract } of ASSETS) {
+  for (const { file, extract } of assets) {
     if (extract) unzip(join(cacheDir, file), join(workDir, dirName(file)));
   }
 
@@ -483,13 +551,13 @@ async function main() {
   for (const dir of OWNED) await rm(dir, { recursive: true, force: true });
   await layDownManual(join(workDir, dirName(ASSET_MANUAL)));
   await layDownSourcing(join(workDir, dirName(ASSET_SOURCING)));
-  for (const { file, download, repackage } of ASSETS) {
+  for (const { file, download, repackage } of assets) {
     if (download) await copyInto(join(cacheDir, file), join(PUBLIC, 'downloads', download));
     if (repackage) await repackageZip(join(cacheDir, file), join(PUBLIC, 'downloads', repackage), workDir);
   }
 
   await writeFile(MARKER, tag + '\n');
-  console.log(`✓ fetch-release: served ${tag} → /{en,zh}/hardware/{manual,sourcing-guide}/ + /downloads/`);
+  console.log(`✓ fetch-release: served ${tag} → /{en,zh}/hardware/{manual,sourcing-guide,extrusion-drawing}/ + /downloads/`);
 }
 
 const isMain = process.argv[1] === fileURLToPath(import.meta.url);
