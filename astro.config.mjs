@@ -10,6 +10,7 @@ import { defineConfig } from 'astro/config';
 import { unified } from '@astrojs/markdown-remark';
 import starlight from '@astrojs/starlight';
 import { loadDocsConfig, resolveDocsSrc } from './scripts/docs-config.mjs';
+import { rehypeExternalLinksNewTab } from './scripts/external-links.mjs';
 
 const DEFAULT_LOCALE = 'en'; // ← change this one value to switch the default language
 
@@ -59,31 +60,6 @@ const LOCALES = {
   en: { label: 'English', lang: 'en' },
   zh: { label: '简体中文', lang: 'zh-CN' },
 };
-
-// Open outbound links in a new tab. A link is "internal" (stays in the same tab)
-// when it's relative or points at physiclaw.ai (or any subdomain — docs./www.);
-// everything else (GitHub, vendor stores, …) opens in a new tab with safe rel.
-// Dependency-free rehype plugin so there's nothing new to install.
-/** @param {string} host */
-const isInternalHost = (host) => host === 'physiclaw.ai' || host.endsWith('.physiclaw.ai');
-function rehypeExternalLinksNewTab() {
-  /** @param {any} node */
-  const walk = (node) => {
-    if (node.tagName === 'a' && node.properties && typeof node.properties.href === 'string') {
-      const href = node.properties.href;
-      if (/^https?:\/\//i.test(href)) {
-        let host = '';
-        try { host = new URL(href).hostname.toLowerCase(); } catch { /* malformed → leave as-is */ }
-        if (host && !isInternalHost(host)) {
-          node.properties.target = '_blank';
-          node.properties.rel = ['noopener', 'noreferrer'];
-        }
-      }
-    }
-    if (node.children) for (const child of node.children) walk(child);
-  };
-  return (/** @type {any} */ tree) => walk(tree);
-}
 
 // Dev-only: the hardware manual/sourcing-guide are static HTML laid into public/
 // by fetch-release.mjs (e.g. public/en/hardware/manual/index.html). Astro's dev
