@@ -2,12 +2,12 @@
 
 The **`PhysiClaw`** repo owns the code *and* the docs (`docs/`). Engineers edit code
 and docs together there. When `docs/` changes, a GitHub Action mirrors the docs into
-this renderer's **tracked `docs/`** directory and pushes; Vercel's Git integration then
-builds and deploys. This renderer is a pure **consumer** — it authors no content.
+this renderer's **tracked `docs/`** directory and pushes; Cloudflare Pages' Git integration
+then builds and deploys. This renderer is a pure **consumer** — it authors no content.
 
 ```
 PhysiClaw/docs/  ──(Action: rsync mirror + commit)──►  docs-site/docs/   (tracked)
-                                                          │  Vercel Git build:
+                                                          │  Cloudflare Pages build:
                                                           │  pnpm build
                                                           │   ├─ sync-docs.mjs → src/content/docs/{en,zh}
                                                           │   └─ astro build   → dist/
@@ -34,9 +34,15 @@ Override either with `DOCS_SRC=<dir>` (e.g. `DOCS_SRC=physiclaw-docs pnpm dev`).
    | --- | --- |
    | `DOCS_SITE_TOKEN` | a PAT / fine-grained token with **write (contents)** access to `physiclaw/docs-site`, so the mirror commit can push |
 
-3. **Keep Vercel's Git integration ON** for the docs-site repo. Because `docs/` is
-   tracked, Vercel can build straight from git on each mirror commit. `vercel.json`
-   pins `buildCommand: pnpm build` so the `prebuild` sync step always runs.
+3. **Keep Cloudflare Pages' Git integration ON** for the docs-site repo, build
+   command `pnpm build`, output directory `dist`. Because `docs/` is tracked, Pages
+   builds straight from git on each mirror commit; `prebuild` fetches the release
+   and syncs the docs first.
+
+4. **Rebuild after a hardware release.** The manual, sourcing guide and drawing come
+   from the latest `physiclaw-hardware-v*` release at build time, so a new release
+   needs a rebuild: create a deploy hook on the Pages project and run
+   `make docs-deploy` in the PhysiClaw repo, which POSTs to it.
 
 ## Required: `docs.json` lives with the content
 

@@ -1,6 +1,5 @@
 node_modules
 .astro
-.vercel
 dist
 .DS_Store
 .vscode

@@ -65,7 +65,7 @@ const LOCALES = {
 // by fetch-release.mjs (e.g. public/en/hardware/manual/index.html). Astro's dev
 // server serves public/ files by exact path but doesn't resolve a directory URL
 // (/en/hardware/manual/) to its index.html — so those pages 404 in `astro dev`,
-// though Vercel serves them in production. Rewrite a trailing-slash request to
+// though Cloudflare Pages serves them in production. Rewrite a trailing-slash request to
 // index.html WHEN that public file exists, so dev matches prod. Scoped by the
 // existsSync check: Starlight's own routes have no public index.html, so they're
 // untouched. apply:'serve' keeps this out of the build.

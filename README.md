@@ -189,15 +189,15 @@ scripts/
 public/                   # static assets; {en,zh}/hardware/{manual,sourcing-guide}/ + downloads/ fetched at build (gitignored)
 deploy/                   # GitHub Action template + deploy guide for the PhysiClaw repo
 astro.config.mjs          # Starlight: locales, redirect, sidebar (from docs.json), brand
-vercel.json               # buildCommand: pnpm build (so the sync prebuild runs)
 ```
 
 ## Deployment
 
-The static site builds to `dist/` and is served by the `docs.physiclaw.ai` Vercel project. In
-production, a GitHub Action in the **PhysiClaw** repo mirrors `PhysiClaw/docs` into this repo's
-tracked `docs/`, commits, and pushes; Vercel's Git integration builds and deploys the commit. See
-[`deploy/`](./deploy/) for the workflow and one-time setup.
+The static site builds to `dist/` and is served by the `docs.physiclaw.ai` Cloudflare Pages
+project. In production, a GitHub Action in the **PhysiClaw** repo mirrors `PhysiClaw/docs` into
+this repo's tracked `docs/`, commits, and pushes; Cloudflare Pages' Git integration builds and
+deploys the commit. See [`deploy/`](./deploy/) for the workflow, the one-time setup and the
+rebuild after a hardware release.
 
 ## License
 

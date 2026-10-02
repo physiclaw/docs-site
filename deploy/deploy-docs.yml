@@ -4,8 +4,8 @@
 # It lives where the docs are authored (PhysiClaw), not in the docs-site renderer.
 # When docs/ changes on the default branch, it MIRRORS PhysiClaw/docs/ into the
 # renderer's tracked ./docs directory and pushes the change. The docs-site repo's
-# Vercel Git integration then builds (pnpm build → sync-docs + astro build) and
-# deploys docs.physiclaw.ai.
+# Cloudflare Pages Git integration then builds (pnpm build → sync-docs + astro
+# build) and deploys docs.physiclaw.ai.
 #
 # The renderer stays a pure consumer: all content + docs.json live in PhysiClaw;
 # ./docs in the renderer is just a committed mirror.
@@ -63,4 +63,4 @@ jobs:
             git commit -m "docs: sync from PhysiClaw@${GITHUB_SHA::7}"
             git push
           fi
-      # docs-site's Vercel Git integration builds & deploys on the pushed commit.
+      # docs-site's Cloudflare Pages Git integration builds & deploys on the pushed commit.
