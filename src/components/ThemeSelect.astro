@@ -1,12 +1,10 @@
 ---
-// Overrides Starlight's ThemeSelect (a 3-option Auto/Light/Dark <select>) with
-// a plain two-state light↔dark toggle — no "auto", no dropdown list. It reuses
-// Starlight's own `starlight-theme` localStorage key, which the inlined
-// ThemeProvider reads to set data-theme before paint, so there's no FOUC.
+// Two-state light/dark buttons. ThemeProvider handles initialization, persistence,
+// system changes, and both desktop/mobile controls before bundled scripts load.
 ---
 
 <starlight-theme-toggle>
-  <button type="button" aria-label="Toggle light / dark theme">
+  <button data-theme-toggle type="button" aria-label="Toggle light / dark theme">
     <svg class="theme-icon sun" viewBox="0 0 24 24" fill="none" stroke="currentColor"
       stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
       <circle cx="12" cy="12" r="4" />
@@ -18,33 +16,3 @@
     </svg>
   </button>
 </starlight-theme-toggle>
-
-<script>
-  class StarlightThemeToggle extends HTMLElement {
-    private controller?: AbortController;
-
-    connectedCallback() {
-      const button = this.querySelector('button');
-      if (!button) return;
-      this.controller = new AbortController();
-      button.addEventListener(
-        'click',
-        () => {
-          const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
-          document.documentElement.dataset.theme = next;
-          try {
-            localStorage.setItem('starlight-theme', next);
-          } catch {
-            /* localStorage may be unavailable (private mode) — theme still applies for this page. */
-          }
-        },
-        { signal: this.controller.signal }
-      );
-    }
-
-    disconnectedCallback() {
-      this.controller?.abort();
-    }
-  }
-  customElements.define('starlight-theme-toggle', StarlightThemeToggle);
-</script>

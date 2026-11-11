@@ -111,11 +111,13 @@ export default defineConfig({
       locales: LOCALES,
       customCss: ['./src/styles/docs.css'],
       // PageTitle: breadcrumb path above the title.
+      // ThemeProvider: system defaults, saved choices, and cross-tab updates.
       // ThemeSelect: a two-state light/dark toggle (no "auto", no dropdown).
       // Header: moves the language select next to the site title.
       // LanguageSelect: a custom, styled dropdown menu (not a native <select>).
       components: {
         PageTitle: './src/components/PageTitle.astro',
+        ThemeProvider: './src/components/ThemeProvider.astro',
         ThemeSelect: './src/components/ThemeSelect.astro',
         Header: './src/components/Header.astro',
         LanguageSelect: './src/components/LanguageSelect.astro',

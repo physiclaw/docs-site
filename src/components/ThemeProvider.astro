@@ -1,0 +1,60 @@
+---
+// Keep this behavior aligned with the sibling PhysiClaw-site ThemeProvider.
+// Preserve this site's storage key so existing choices survive the update.
+---
+
+{/* Apply the theme in the head before paint; the toggle needs no bundled JS. */}
+<script is:inline>
+  (() => {
+    const storageKey = 'starlight-theme';
+    const root = document.documentElement;
+    const systemTheme = window.matchMedia('(prefers-color-scheme: light)');
+    const parseTheme = (value) => value === 'light' || value === 'dark' ? value : null;
+    let preference = null;
+    try {
+      preference = parseTheme(localStorage.getItem(storageKey));
+    } catch {
+      // Blocked storage must not prevent system defaults or manual switching.
+    }
+
+    function applyTheme() {
+      const theme = preference || (systemTheme.matches ? 'light' : 'dark');
+      root.dataset.theme = theme;
+      document.querySelectorAll('[data-theme-toggle]').forEach((button) => {
+        button.setAttribute('aria-label', theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme');
+      });
+    }
+
+    applyTheme();
+    // The head runs before the buttons are parsed. Sync all accessible labels once ready.
+    document.addEventListener('DOMContentLoaded', applyTheme, { once: true });
+
+    systemTheme.addEventListener('change', () => {
+      if (!preference) applyTheme();
+    });
+
+    // Delegation also covers the docs site's separate desktop and mobile buttons.
+    document.addEventListener('click', (event) => {
+      if (!(event.target instanceof Element) || !event.target.closest('[data-theme-toggle]')) return;
+      preference = root.dataset.theme === 'dark' ? 'light' : 'dark';
+      applyTheme();
+      try {
+        localStorage.setItem(storageKey, preference);
+      } catch {
+        // Keep the manual choice in memory for this page if persistence is unavailable.
+      }
+    });
+
+    // Other tabs on this origin can change or clear the preference.
+    window.addEventListener('storage', (event) => {
+      if (event.key !== storageKey && event.key !== null) return;
+      try {
+        if (event.storageArea !== localStorage) return;
+      } catch {
+        return;
+      }
+      preference = parseTheme(event.newValue);
+      applyTheme();
+    });
+  })();
+</script>
